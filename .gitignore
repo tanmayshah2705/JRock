@@ -1,0 +1,3 @@
+*.class
+WEB-INF/web.xml
+WEB-INF/lib/
