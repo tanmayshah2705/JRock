@@ -6,8 +6,42 @@
 <script>
 // JRock part starts here
 function $$$(cid){
-
+let element=document.getElementById(cid);
+if(!element) throw "Invalid id : "+cid;
+return new JRockElement(element);
 }
+
+function JRockElement(element)
+{
+this.element=element;
+this.html=function(content)
+{
+if(typeof this.element.innerHTML=="string")
+{
+if(typeof content=="string")
+{
+this.element.innerHTML=content;
+}
+return this.element.innerHTML;
+}
+return null;
+} // html function ends
+
+this.value=function(content)
+{
+if(typeof this.element.value)
+{
+if(typeof content=="string")
+{
+this.element.value=content;
+}
+return this.element.value;
+}
+return null;
+} // value function ends
+
+} // class JRockElement ends
+
 $$$.ajax=function(jsonObject)
 {
 if(!jsonObject["url"]) throw "url is missing in call to ajax";
@@ -57,25 +91,27 @@ xmlHttpRequest.send();
 if(methodType=="POST")
 {
 }
-
 }
 // JRock part ends here
 
-function populateDesignations()
+function getDesignation()
 {
+let titleSpan=$$$("titleSpan");
+titleSpan.html("");
+let code=$$$("code").value();
+
 $$$.ajax({
-"url":"servletOne",
+"url":"servletTwo?code="+encodeURI(code),
 "methodType":"GET",
 "success":function(responseData){
-var designations=JSON.parse(responseData);
-var designationsComboBox=document.getElementById("whatever");
-var obj;
-for(var i=0;i<designations.length;i+=2)
+if(responseData=="INVALID")
 {
-obj=document.createElement("option");
-obj.value=designations[i].code;
-obj.text=designations[i].title;
-designationsComboBox.appendChild(obj);
+alert('Invalide designation code');
+}
+else
+{
+var splits=responseData.split(",");
+titleSpan.html(splits[1]);
 }
 },
 "failure":function(){
@@ -83,12 +119,22 @@ alert("Some problem");
 }
 });
 }
-window.addEventListener('load',populateDesignations);
+
+
+
+
+
+
 </script>
 </head>
 <body>
-Select designation :
-<select id='whatever'>
-</select>
+<h1>GET type request with data</h1>
+Enter code : <input type='text' id='code'><br>
+Title : <span id='titleSpan'></span>
+<br>
+<button type='button' onclick='getDesignation()'>Search</button>
+<br>
+<br>
+<a href='/JRock/index.html'>Home</a>
 </body>
 </html>
