@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<title>AJAX Example</title>
+<script>
+//////////////////////////////////////
+///////JRock library starts here//////
+
+function $$$(cid){
+let element=document.getElementById(cid);
+if(!element) throw "Invalid id : "+cid;
+return new JRockElement(element);
+}
+
+$$$.model={
+"onStartup":[],
+"accordions":[]
+}
+
+$$$.accordionHeadingClicked=function(accordionIndex,panelIndex)
+{
+if($$$.model.accordions[accordionIndex].expandedIndex!=-1) $$$.model.accordions[accordionIndex].panels[$$$.model.accordions[accordionIndex].expandedIndex].style.display = "none";
+$$$.model.accordions[accordionIndex].panels[panelIndex+1].style.display=$$$.model.accordions[accordionIndex].panels[panelIndex+1].oldDisplay;
+$$$.model.accordions[accordionIndex].expandedIndex=panelIndex+1;
+}
+
+$$$.toAccordion=function(aid)
+{
+let panels=[];
+let expandedIndex=-1;
+let accordion=document.getElementById(aid);
+let children=accordion.childNodes;
+let i;
+for(i=0; i<children.length; i++)
+{
+if(children[i].nodeName=="H3") panels[panels.length]=children[i];
+if(children[i].nodeName=="DIV") panels[panels.length]=children[i];
+}
+if(panels.length%2!=0) throw "Headings and divisions malformed to create accordion because its not even";
+for(i=0;i<panels.length;i+=2)
+{
+if(panels[i].nodeName!="H3") throw "Headings and divisions malformed to create accordion because its not H3 at index"+i;
+if(panels[i+1].nodeName!="DIV") throw "Headings and divisions malformed to create accordion because its not Div at index"+i;
+}
+function createClickHandler(accordionIndex,panelIndex)
+{
+return function(){
+$$$.accordionHeadingClicked(accordionIndex,panelIndex);
+};
+}
+let accordionIndex=$$$.model.accordions.length;
+for(i=0;i<panels.length;i+=2)
+{
+panels[i].onclick=createClickHandler(accordionIndex,i);
+panels[i+1].oldDisplay=panels[i+1].style.display;
+panels[i+1].style.display="none";
+}
+$$$.model.accordions[accordionIndex]={
+"panels":panels,
+"expandedIndex":-1
+};
+}
+
+$$$.onDocumentLoaded=function(func){
+if(typeof func!="function") throw "Expected function, found "+(typeof func)+" in call to onDocumentLoaded";
+$$$.model.onStartup[$$$.model.onStartup.length]=func;
+}
+
+$$$.initFramework=function()
+{
+for(let x=0;x<$$$.model.onStartup.length;x++)
+$$$.model.onStartup[x]();
+}
+
+window.addEventListener('load',function(){
+$$$.initFramework();
+});
+
+function JRockElement(element)
+{
+this.element=element;
+
+// html() function
+this.html=function(content)
+{
+if(typeof this.element.innerHTML=="string")
+{
+if(typeof content=="string")
+{
+this.element.innerHTML=content;
+}
+return this.element.innerHTML;
+}
+return null;
+} 
+
+// value() function
+this.value=function(content)
+{
+if(typeof this.element.value)
+{
+if(typeof content=="string")
+{
+this.element.value=content;
+}
+return this.element.value;
+}
+return null;
+}
+
+// fillComboBox() function
+this.fillComboBox=function(jsonObject)
+{
+if(this.element.nodeName!="SELECT") throw "fillComboBox can be called on a SELECT type object only";
+if(!jsonObject["dataSource"]) throw "\'dataSource\' property is missing in fillComboBox function's parameter";
+if(!jsonObject["text"]) throw "\'text\' property is missing in fillComboBox function's parameter";
+if(!jsonObject["value"]) throw "\'value\' property is missing in fillComboBox function's parameter";
+if(!Array.isArray(jsonObject["dataSource"])) throw "\'dataSource\' property should be a collection in fillComboBox function's parameter";
+if(typeof jsonObject["text"]!="string") throw "\'text\' property should be of string type in fillComboBox function's parameter";
+if(typeof jsonObject["value"]!="string") throw "\'value\' property should be of string type in fillComboBox function's parameter";
+for(let obj of jsonObject["dataSource"]) //to check if values against text and value property is part of dataSource element
+{
+if(!obj[jsonObject["text"]]) throw "value against \'text\' property is not found in dataSource element";
+if(!obj[jsonObject["value"]]) throw "value against \'value\' property is not found in dataSource element";
+//alert(obj[jsonObject["text"]] +", "+obj[jsonObject["value"]]);
+}
+if(jsonObject["firstOption"])
+{
+if(!jsonObject["firstOption"]["text"]) throw "\'text\' property is missing in firstOption";
+if(!jsonObject["firstOption"]["value"]) throw "\'value\' property is missing in firstOption";
+if(typeof jsonObject["firstOption"]["text"]!="string") throw "\'text\' property should be of string type in firstOption";
+if(typeof jsonObject["firstOption"]["value"]!="string") throw "\'value\' property should be of string type in firstOption";
+}
+this.element.options.length=0;
+if(jsonObject["firstOption"])
+{
+let option = document.createElement("option");
+option.text = jsonObject["firstOption"]["text"];
+option.value = jsonObject["firstOption"]["value"];
+this.element.appendChild(option);
+}
+for(let obj of jsonObject["dataSource"])
+{
+let option = document.createElement("option");
+option.text = obj[jsonObject["text"]];
+option.value = obj[jsonObject["value"]];
+this.element.appendChild(option);
+}
+}
+
+} // class JRockElement ends
+
+$$$.ajax=function(jsonObject)
+{
+if(!jsonObject["url"]) throw "url is missing in call to ajax";
+let url = jsonObject["url"];
+if((typeof url)!="string") throw "url property should be of string type";
+let methodType="GET";
+if(jsonObject["methodType"])
+{
+methodType=jsonObject["methodType"];
+if((typeof methodType)!="string") throw "methodType property should be of string type in call to ajax";
+methodType=methodType.toUpperCase();
+if(["GET","POST"].includes(methodType)==false) throw "methodType should be GET/POST in call to ajax"; 
+}
+let onSuccess=null;
+if(jsonObject["success"])
+{
+onSuccess=jsonObject["success"];
+if((typeof onSuccess)!="function") throw "success property should be a function in call to ajax";
+}
+let onFailure=null;
+if(jsonObject["failure"])
+{
+onFailure=jsonObject["failure"];
+if((typeof onFailure)!="function") throw "failure property should be a function in call to ajax";
+}
+
+if(methodType=="GET")
+{
+var xmlHttpRequest = new XMLHttpRequest();
+xmlHttpRequest.onreadystatechange=function(){
+if(this.readyState==4)
+{
+if(this.status==200)
+{
+var responseData = this.responseText;
+if(onSuccess) onSuccess(responseData);
+}
+else
+{
+if(onFailure) onFailure();
+}
+}
+};
+if(jsonObject["data"])
+{
+let jsonData = jsonObject["data"];
+let querystr="";
+let qsName;
+let qsValue;
+let i=0;
+for(key in jsonData)
+{
+if(i==0) querystr="?";
+if(i>0) querystr+="&";
+i++;
+qsName=encodeURI(key);
+qsValue=encodeURI(jsonData[key]);
+querystr=querystr+qsName+"="+qsValue;
+}
+url+=querystr; 
+}
+
+xmlHttpRequest.open(methodType,url,true);
+xmlHttpRequest.send();
+}
+
+if(methodType=="POST")
+{
+var xmlHttpRequest = new XMLHttpRequest();
+xmlHttpRequest.onreadystatechange=function(){
+if(this.readyState==4)
+{
+if(this.status==200)
+{
+var responseData = this.responseText;
+if(onSuccess) onSuccess(responseData);
+}
+else
+{
+if(onFailure) onFailure();
+}
+}
+};
+
+let jsonData={};
+let sendJSON=jsonObject["sendJSON"];
+if(!sendJSON) sendJSON=false;
+if(typeof sendJSON!="boolean") throw "sendJSON property should be of boolean type in call to ajax";
+let querystr="";
+if(jsonObject["data"])
+{
+if(sendJSON)
+{
+jsonData = jsonObject["data"];
+}
+else
+{
+querystr="";
+let qsName;
+let qsValue;
+let i=0;
+for(key in data)
+{
+//if(i==0) querystr="?";
+if(i>0) querystr+="&";
+i++;
+qsName=encodeURI(key);
+qsValue=encodeURI(data[key]);
+querystr=querystr+qsName+"="+qsValue;
+}
+}
+}
+xmlHttpRequest.open(methodType,url,true);
+
+if(sendJSON)
+{
+xmlHttpRequest.setRequestHeader("Content-type","application/json");
+xmlHttpRequest.send(JSON.stringify(jsonData));
+}
+else
+{
+xmlHttpRequest.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+xmlHttpRequest.send(querystr);
+}
+
+}
+}
+/////////JRock part ends here///////////
+////////////////////////////////////////
+
+$$$.onDocumentLoaded(function(){
+$$$.toAccordion("mymy");
+$$$.toAccordion("gogo");
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</head>
+<body>
+<div id='mymy' style='width:500px;'>
+<h3>Heading 1</h3>
+<div>
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+</div>
+<h3>Heading 2</h3>
+<div>
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+</div>
+<h3>Heading 3</h3>
+<div>
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+</div>
+<h3>Heading 4</h3>
+<div>
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+</div>
+
+</div>
+
+
+
+
+
+
+
+<div id='gogo' style='width:800px;'>
+<h3>Heading 11</h3>
+<div>
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+</div>
+<h3>Heading 22</h3>
+<div>
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+</div>
+<h3>Heading 33</h3>
+<div>
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+</div>
+<h3>Heading 44</h3>
+<div>
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+</div>
+
+</div>
+</body>
+</html>
