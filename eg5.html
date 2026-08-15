@@ -2,8 +2,12 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8'>
+<title>AJAX Example</title>
 <script>
-// JRock part starts here
+
+//////////////////////////////////////
+///////JRock library starts here//////
+
 function $$$(cid){
 let element=document.getElementById(cid);
 if(!element) throw "Invalid id : "+cid;
@@ -13,6 +17,8 @@ return new JRockElement(element);
 function JRockElement(element)
 {
 this.element=element;
+
+// html() function
 this.html=function(content)
 {
 if(typeof this.element.innerHTML=="string")
@@ -24,8 +30,9 @@ this.element.innerHTML=content;
 return this.element.innerHTML;
 }
 return null;
-} // html function ends
+} 
 
+// value() function
 this.value=function(content)
 {
 if(typeof this.element.value)
@@ -37,7 +44,47 @@ this.element.value=content;
 return this.element.value;
 }
 return null;
-} // value function ends
+}
+
+// fillComboBox() function
+this.fillComboBox=function(jsonObject)
+{
+if(this.element.nodeName!="SELECT") throw "fillComboBox can be called on a SELECT type object only";
+if(!jsonObject["dataSource"]) throw "\'dataSource\' property is missing in fillComboBox function's parameter";
+if(!jsonObject["text"]) throw "\'text\' property is missing in fillComboBox function's parameter";
+if(!jsonObject["value"]) throw "\'value\' property is missing in fillComboBox function's parameter";
+if(!Array.isArray(jsonObject["dataSource"])) throw "\'dataSource\' property should be a collection in fillComboBox function's parameter";
+if(typeof jsonObject["text"]!="string") throw "\'text\' property should be of string type in fillComboBox function's parameter";
+if(typeof jsonObject["value"]!="string") throw "\'value\' property should be of string type in fillComboBox function's parameter";
+for(let obj of jsonObject["dataSource"]) //to check if values against text and value property is part of dataSource element
+{
+if(!obj[jsonObject["text"]]) throw "value against \'text\' property is not found in dataSource element";
+if(!obj[jsonObject["value"]]) throw "value against \'value\' property is not found in dataSource element";
+//alert(obj[jsonObject["text"]] +", "+obj[jsonObject["value"]]);
+}
+if(jsonObject["firstOption"])
+{
+if(!jsonObject["firstOption"]["text"]) throw "\'text\' property is missing in firstOption";
+if(!jsonObject["firstOption"]["value"]) throw "\'value\' property is missing in firstOption";
+if(typeof jsonObject["firstOption"]["text"]!="string") throw "\'text\' property should be of string type in firstOption";
+if(typeof jsonObject["firstOption"]["value"]!="string") throw "\'value\' property should be of string type in firstOption";
+}
+this.element.options.length=0;
+if(jsonObject["firstOption"])
+{
+let option = document.createElement("option");
+option.text = jsonObject["firstOption"]["text"];
+option.value = jsonObject["firstOption"]["value"];
+this.element.appendChild(option);
+}
+for(let obj of jsonObject["dataSource"])
+{
+let option = document.createElement("option");
+option.text = obj[jsonObject["text"]];
+option.value = obj[jsonObject["value"]];
+this.element.appendChild(option);
+}
+}
 
 } // class JRockElement ends
 
@@ -168,51 +215,43 @@ xmlHttpRequest.send(querystr);
 
 }
 }
-// JRock part ends here
+/////////JRock part ends here///////////
+////////////////////////////////////////
 
 
 
 
 
 
-
-
-function submitForm()
+function populateDesignations()
 {
-var firstName=$$$("firstName").value();
-var lastName=$$$("lastName").value();
-var age=$$$("age").value();
-var customer=
-{
-"firstName":firstName,
-"lastName":lastName,
-"age":age
-};
-var whatever=$$$("whatever");
-whatever.html("");
 $$$.ajax({
-"methodType":"POST",
-"url":"servletThree",
-"data":customer,
-"sendJSON":true,
+"url":"servletOne",
+"methodType":"GET",
 "success":function(responseData){
-var customer=JSON.parse(responseData);
-whatever.html(customer.firstName +"\n"+ customer.lastName +"\n"+ customer.age);
+var designations = JSON.parse(responseData);
+$$$('designationCode').fillComboBox({
+"dataSource":designations,
+"text":"title",
+"value":"code",
+"firstOption":{
+"text":"<select designation>",
+"value":"-1"
+}
+});	
 },
 "failure":function(){
-alert("Some problem");
+alert('some problem');
 }
 });
 }
+
+window.addEventListener('load',populateDesignations);
 </script>
 </head>
 <body>
-<h1>POST type request with form </h1>
-First Name <input type='text' id='firstName'><br>
-Last Name <input type='text' id='lastName'><br>
-Age <input type='text' id='age'><br>
-<button type='button' onclick=submitForm()>Save</button>
-<br>
-<div id='whatever'></div>
+Select designation :
+<select id='designationCode'>
+</select>
 </body>
 </html>
