@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<title>AJAX Example</title>
+<script>
+var panels=[];
+var selectedHeadingIndex=-1;
+function setAccordionHeading(i)
+{
+if(selectedHeadingIndex!=-1) panels[selectedHeadingIndex+1].style.display="none";
+panels[i+1].style.display=panels[i+1].oldDisplay;
+selectedHeadingIndex=i;
+}
+function doit()
+{
+var accordion = document .getElementById('mymy');
+var accordionChildren=accordion.childNodes;
+for(let i=0; i<accordionChildren.length; i++)
+{
+if(accordionChildren[i].nodeName=="H3") panels[panels.length]=accordionChildren[i];
+if(accordionChildren[i].nodeName=="DIV") panels[panels.length]=accordionChildren[i];
+}
+if(panels.length%2!=0) throw "Headings and divisions malformed to create accordion because its not even";
+for(let i=0;i<panels.length;i+=2)
+{
+if(panels[i].nodeName!="H3") throw "Headings and divisions malformed to create accordion because its not H3 at index"+i;
+if(panels[i+1].nodeName!="DIV") throw "Headings and divisions malformed to create accordion because its not Div at index"+i;
+}
+
+function createClickHandler(x)
+{
+return function(){
+setAccordionHeading(x);
+};
+}
+for(let i=0;i<panels.length;i+=2)
+{
+panels[i].onclick=createClickHandler(i);
+panels[i+1].oldDisplay=panels[i+1].style.display;
+panels[i+1].style.display="none";
+}
+}
+
+window.addEventListener('load',doit);
+</script>
+</head>
+<body>
+<div id='mymy' style='width:500px;'>
+<h3>Heading 1</h3>
+<div>
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
+</div>
+<h3>Heading 2</h3>
+<div>
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 Content 2 
+</div>
+<h3>Heading 3</h3>
+<div>
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 Content 3 
+</div>
+<h3>Heading 4</h3>
+<div>
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 
+</div>
+
+</div>
+</body>
+</html>
