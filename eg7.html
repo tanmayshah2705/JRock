@@ -25,11 +25,10 @@ $$$.model.accordions[accordionIndex].panels[panelIndex+1].style.display=$$$.mode
 $$$.model.accordions[accordionIndex].expandedIndex=panelIndex+1;
 }
 
-$$$.toAccordion=function(aid)
+$$$.toAccordion=function(accordion)
 {
 let panels=[];
 let expandedIndex=-1;
-let accordion=document.getElementById(aid);
 let children=accordion.childNodes;
 let i;
 for(i=0; i<children.length; i++)
@@ -69,6 +68,19 @@ $$$.model.onStartup[$$$.model.onStartup.length]=func;
 
 $$$.initFramework=function()
 {
+let allTags=document.getElementsByTagName("*");
+let i;
+for(i=0;i<allTags.length;i++)
+{
+if(allTags[i].hasAttribute("accordion"))
+{
+if(allTags[i].getAttribute("accordion")=="true")
+{
+$$$.toAccordion(allTags[i]);
+}
+}
+}
+
 for(let x=0;x<$$$.model.onStartup.length;x++)
 $$$.model.onStartup[x]();
 }
@@ -281,10 +293,11 @@ xmlHttpRequest.send(querystr);
 /////////JRock part ends here///////////
 ////////////////////////////////////////
 
+/*
 $$$.onDocumentLoaded(function(){
 $$$.toAccordion("mymy");
 $$$.toAccordion("gogo");
-});
+});*/
 
 
 
@@ -302,7 +315,7 @@ $$$.toAccordion("gogo");
 </script>
 </head>
 <body>
-<div id='mymy' style='width:500px;'>
+<div style='width:500px;' accordion="true">
 <h3>Heading 1</h3>
 <div>
 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
@@ -348,7 +361,7 @@ Content 4 Content 4 Content 4 Content 4 Content 4 Content 4 Content 4
 
 
 
-<div id='gogo' style='width:800px;'>
+<div style='width:800px;' accordion="true">
 <h3>Heading 11</h3>
 <div>
 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 Content 1 
