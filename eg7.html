@@ -30,16 +30,19 @@ $$$.toAccordion=function(accordion)
 let panels=[];
 let expandedIndex=-1;
 let children=accordion.childNodes;
+let headings=['H1','H2','H3','H4','H5','H6'];
 let i;
 for(i=0; i<children.length; i++)
 {
-if(children[i].nodeName=="H3") panels[panels.length]=children[i];
+//if(children[i].nodeName=="H3") panels[panels.length]=children[i];
+if(headings.includes(children[i].nodeName)) panels[panels.length]=children[i];
 if(children[i].nodeName=="DIV") panels[panels.length]=children[i];
 }
 if(panels.length%2!=0) throw "Headings and divisions malformed to create accordion because its not even";
 for(i=0;i<panels.length;i+=2)
 {
-if(panels[i].nodeName!="H3") throw "Headings and divisions malformed to create accordion because its not H3 at index"+i;
+//if(panels[i].nodeName!="H3") throw "Headings and divisions malformed to create accordion because its not H3 at index"+i;
+if(headings.includes(children[i].nodeName)) throw "Headings and divisions malformed to create accordion because its not H3 at index"+i;
 if(panels[i+1].nodeName!="DIV") throw "Headings and divisions malformed to create accordion because its not Div at index"+i;
 }
 function createClickHandler(accordionIndex,panelIndex)
