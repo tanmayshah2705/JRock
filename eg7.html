@@ -42,7 +42,7 @@ if(panels.length%2!=0) throw "Headings and divisions malformed to create accordi
 for(i=0;i<panels.length;i+=2)
 {
 //if(panels[i].nodeName!="H3") throw "Headings and divisions malformed to create accordion because its not H3 at index"+i;
-if(headings.includes(children[i].nodeName)) throw "Headings and divisions malformed to create accordion because its not H3 at index"+i;
+if(!headings.includes(panels[i].nodeName)) throw "Headings and divisions malformed to create accordion because its not a 'Heading' at index "+i;
 if(panels[i+1].nodeName!="DIV") throw "Headings and divisions malformed to create accordion because its not Div at index"+i;
 }
 function createClickHandler(accordionIndex,panelIndex)

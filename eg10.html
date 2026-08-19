@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<title>Ajax example</title>
+<style>
+.modalMask
+{
+width:100%;
+height:100%;
+top:0;
+left:0;
+border: 1px solid red;
+background: gray;
+position:fixed;
+opacity: 70%;
+}
+.modal
+{
+width:400px;
+min-width:400px;
+height:300px;
+min-height:300px;
+background-color:blue;
+position:fixed;
+top:0;
+left:0;
+bottom:0;
+right:0;
+margin:auto;
+border:2px solid white;
+}
+.closeButton
+{
+float:right;
+padding:2px 7px;
+cursor:pointer;
+margin-right:5px;
+margin-top:2px;
+font-size:14pt;
+}
+</style>
+
+<script>
+var ds={
+"modals":[]
+};
+var $$$={
+"modals":{}
+};
+$$$.modals.show=function(mid)
+{
+let modal=null;
+for(var i=0;i<ds.modals.length;i++)
+{
+if(ds.modals[i].getContentId()==mid){ modal=ds.modals[i]; break; }
+}
+if(modal==null) return;
+modal.show();
+}
+
+//following is a class
+function Modal(cref)
+{
+var objectAddress=this;
+//some property to determine wheather to close when clicked outside the modal
+this.beforeOpening=null;
+this.afterOpening=null;
+this.beforeClosing=null;
+this.afterClosing=null;
+var contentReference=cref;
+this.getContentId=function(){
+return contentReference.id;
+};
+var contentParentReference=contentReference.parentElement;
+var contentIndex=0;
+while(contentIndex < contentParentReference.children.length)
+{
+if(contentReference==contentParentReference.children[contentIndex]) break;
+++contentIndex;
+}
+var modalMaskDivision=document.createElement("div");
+modalMaskDivision.style.display="none";
+modalMaskDivision.classList.add("modalMask");
+var modalDivision=document.createElement("div");
+modalDivision.style.display="none";
+modalDivision.classList.add("modal");
+document.body.appendChild(modalMaskDivision);
+document.body.appendChild(modalDivision);
+
+var headerDivision=document.createElement("div");
+	headerDivision.style.background	="red";
+	headerDivision.style.right="0";
+	headerDivision.style.height="40px";
+	headerDivision.style.padding="5px";
+	modalDivision.appendChild(headerDivision);
+
+
+if(contentReference.hasAttribute("size"))
+{
+var sz=contentReference.getAttribute("size");
+let xpos=sz.indexOf("x");
+if(xpos==-1) xpos=sz.indexOf("X");
+if(xpos==-1) throw "In case of modal, size should be specified as widthxheight";
+if(xpos==0 || xpos==sz.length-1) throw "In case of modal, size should be specified as widthxheight";
+let width=sz.substring(0,xpos);
+let height=sz.substring(xpos+1);
+modalDivision.style.width=width+"px";
+modalDivision.style.height=height+"px";
+}
+else
+{
+modalDivision.style.width="300px";
+modalDivision.style.height="300px";
+}
+if(contentReference.hasAttribute("header"))
+{
+var hd=contentReference.getAttribute("header");
+headerDivision.innerHTML=hd;
+// if header is set by user, then the close button must be the part of the header division
+}
+
+if(contentReference.hasAttribute("maskColor"))
+{
+var mkc=contentReference.getAttribute("maskColor");
+modalMaskDivision.style.background=mkc;
+}
+if(contentReference.hasAttribute("modalBackgroundColor"))
+{
+var mbc=contentReference.getAttribute("modalBackgroundColor");
+modalDivision.style.background=mbc;
+}
+
+var contentDivision=document.createElement("div");							//130		
+contentDivision.style.height=(modalDivision.style.height.substring(0,modalDivision.style.height.length-2)-133)+"px";
+contentDivision.style.width="98%";
+contentDivision.style.overflow="auto";
+contentDivision.style.padding="5px";
+contentReference.remove();
+contentDivision.appendChild(contentReference);
+contentReference.style.display="block";
+contentReference.style.visibility="visible";
+modalDivision.appendChild(contentDivision);
+
+var footerDivision=document.createElement("div");
+	footerDivision.style.background	="pink";
+	footerDivision.style.left="0";
+	footerDivision.style.right="0";
+	footerDivision.style.height="40px";
+	footerDivision.style.padding="5px";
+	footerDivision.style.position="absolute";
+	footerDivision.style.bottom="0";
+	modalDivision.appendChild(footerDivision);
+
+if(contentReference.hasAttribute("footer"))
+{   
+var ft=contentReference.getAttribute("footer");
+footerDivision.innerHTML=ft;
+}
+
+var closeButtonSpan=null; 
+if(contentReference.hasAttribute("closeButton"))
+{
+var cb=contentReference.getAttribute("closeButton");
+if(cb.toLowerCase()=="true")
+{
+closeButtonSpan=document.createElement("span");
+closeButtonSpan.classList.add("closeButton");
+var closeButtonMarker=document.createTextNode("x");
+closeButtonSpan.appendChild(closeButtonMarker);
+headerDivision.appendChild(closeButtonSpan);
+}
+}
+
+if(contentReference.hasAttribute("beforeOpening"))
+{
+var bo=contentReference.getAttribute("beforeOpening");
+this.beforeOpening=bo;
+}
+if(contentReference.hasAttribute("afterOpening"))
+{
+var ao=contentReference.getAttribute("afterOpening");
+this.afterOpening=ao;
+}
+if(contentReference.hasAttribute("beforeClosing"))
+{
+var bc=contentReference.getAttribute("beforeClosing");
+this.beforeClosing=bc;
+} 
+if(contentReference.hasAttribute("afterClosing"))
+{
+var ac=contentReference.getAttribute("afterClosing");
+this.afterClosing=ac;
+} 
+
+
+
+
+this.show=function(){
+let openModal=true;
+if(this.beforeOpening)
+{
+openModal=eval(this.beforeOpening);
+}
+if(openModal)
+{
+modalDivision.style.display="block";
+modalMaskDivision.style.display="block";
+if(this.afterOpening) setTimeout(function(){eval(objectAddress.afterOpening);},100);
+}
+};
+
+
+if(closeButtonSpan!=null)
+{
+closeButtonSpan.onclick=function(){
+let closeModal=true;
+if(objectAddress.beforeClosing)
+{
+closeModal=eval(objectAddress.beforeClosing);
+} 
+if(closeModal)
+{
+modalDivision.style.display="none";
+modalMaskDivision.style.display="none";
+if(objectAddress.afterClosing) setTimeout(function(){eval(objectAddress.afterClosing);},100);
+}
+};
+}
+}
+
+
+
+function abBeforeOpening()
+{
+alert("Modal with ab is about to be opened");
+return true;
+}
+function abOpened()
+{
+alert("Modal1 opened");
+}
+function abBeforeClosing()
+{
+alert("Modal with ab is about to be closed");
+return true;
+}
+function abClosed()
+{
+alert("modal1 closed");
+}
+function createModal1()
+{
+$$$.modals.show("ab");
+}
+
+
+
+
+function loader()
+{
+var allTags=document.getElementsByTagName("*");
+let i=0;
+while(i<allTags.length)
+{
+if(allTags[i].hasAttribute("forModal"))
+{
+if(allTags[i].getAttribute("forModal").toLowerCase()=="true")
+{
+allTags[i].setAttribute("forModal","false");
+ds.modals[ds.modals.length]=new Modal(allTags[i]);
+continue;
+}
+}
+++i;
+}
+}
+
+window.addEventListener('load',loader);
+
+</script>
+</head>
+<body>
+<button onclick='createModal1()'>Show modal 1</button>
+
+<div id='ab' style="display:none" forModal="true" size="600x300" header="Some heading" footer="some footer" closeButton=true maskColor="#0000ff" modalBackgroundColor="#549933" beforeOpening="abBeforeOpening()" afterOpening="abOpened()" beforeClosing="abBeforeClosing()"afterClosing="abClosed()">
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+god is great<br>
+lAsT lInE
+</div>
+
+
+</body>
+</html>
