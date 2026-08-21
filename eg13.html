@@ -1,3 +1,4 @@
+<!--This is the original Grid code, not to be merged into the JRock lib-->
 <!doctype html>
 <html lang='en'>
 <head>
@@ -8,12 +9,14 @@
 .jrock_jgrid_header_division
 {
 overflow-x:hidden;
-overflow-y:hidden;
+overflow-y:scroll;
+width:300px;
 }
 .jrock_jgrid_body_division
 {
-overflow-x:auto;
-overflow-y:auto;
+overflow-x:scroll;
+overflow-y:scroll;
+width:300px;
 height:400px;
 }
 
@@ -24,6 +27,7 @@ border-bottom:0px;
 border-spacing:0px;
 border-collapse:collapse;
 background:lightgray;
+width:750px;
 }
 .jrock_jgrid_head td
 {
@@ -59,6 +63,7 @@ text-align:left;
 border:1px groove green;
 border-spacing:0px;
 border-collapse:collapse;
+width:750px;
 }
 .jrock_jgrid_body td
 {
@@ -88,9 +93,22 @@ text-align:left;
 }
 .jrock_jgrid_pagination td
 {
-width:100px;
+width:20px;
 text-align:center;
 }
+.jrock_jgrid_pagination_division
+{
+margin-top:20px;
+}
+.jrock_jgrid_pagination a
+{
+background-color:red;
+color:white;
+padding: 10px 18px;
+text-decoration:none;
+text-transform:uppercase;
+}
+
 </style>
 
 <!-- user specific styling-->
@@ -124,18 +142,27 @@ this.dataTableId=dataTableId;
 this.dataTablePaginationId=dataTablePaginationId;
 this.students=students;
 this.pageSize=pageSize;
-this.pageNumber=10;
+this.pageNumber=1;
 this.numberOfPaginationControls=5;
 this.update();
 this.updatePagination();
 }
+setPage(pageNumber)
+{
+this.pageNumber=pageNumber;
+this.update();
+this.updatePagination();
+return false;
+}
 update()
 {
 var dataTable=document.getElementById(this.dataTableId);
+while(dataTable.rows.length>0) dataTable.deleteRow(0);
 var tr;
 var td;
 var startFromIndex=(this.pageNumber-1)*this.pageSize;
 var endAtIndex=startFromIndex+this.pageSize-1;
+if(endAtIndex>=this.students.length) endAtIndex=this.students.length-1;
 var x;
 for(x=startFromIndex;x<=endAtIndex;x++)
 {
@@ -160,12 +187,19 @@ dataTable.appendChild(tr);
 }
 updatePagination()
 {
+function createPageChangeFunction(obj,pageNumber)
+{
+return function(){
+obj.setPage(pageNumber);
+};
+}
 var startFrom=((Math.floor((this.pageNumber-1)/this.numberOfPaginationControls)+1)-1)*this.numberOfPaginationControls+1;
 var endAt=startFrom+this.numberOfPaginationControls-1;
 var numberOfPages=Math.floor(this.students.length/this.pageSize);
 if(this.students.length%this.pageSize!=0) numberOfPages++;
 if(endAt>numberOfPages) endAt=numberOfPages;
 var dataTablePagination=document.getElementById(this.dataTablePaginationId);
+while(dataTablePagination.rows.length>0) dataTablePagination.deleteRow(0);
 var x;
 var tr;
 var td;
@@ -176,7 +210,8 @@ if(startFrom>1)
 td=document.createElement("td");
 anchor=document.createElement("a");
 anchor.text="prev";
-anchor.href='abcd';
+anchor.href='javascript:void(0)';
+anchor.onclick=createPageChangeFunction(this,startFrom-1);
 td.appendChild(anchor);
 tr.appendChild(td);
 }
@@ -191,7 +226,9 @@ else
 {
 anchor=document.createElement("a");
 anchor.text=x;
-anchor.href='abcd';
+anchor.href='javascript:void(0)';
+let objectAddress=this;
+anchor.onclick=createPageChangeFunction(this,x);
 td.appendChild(anchor);
 }
 tr.appendChild(td);
@@ -201,7 +238,8 @@ if(endAt<numberOfPages)
 td=document.createElement("td");
 anchor=document.createElement("a");
 anchor.text="next";
-anchor.href="abcd";
+anchor.href='javascript:void(0)';
+anchor.onclick=createPageChangeFunction(this,endAt+1);
 td.appendChild(anchor);
 tr.appendChild(td);
 }
@@ -215,9 +253,15 @@ var model={
 
 function loader()
 {
+var jrock_jgrid_header_division=document.querySelector(".jrock_jgrid_header_division");
+var jrock_jgrid_body_division=document.querySelector(".jrock_jgrid_body_division");
+jrock_jgrid_body_division.addEventListener('scroll',function(){
+jrock_jgrid_header_division.scrollLeft=jrock_jgrid_body_division.scrollLeft;
+});
+
 var i;
 var students=new Array();
-for(i=101;i<=1000;i++)
+for(i=101;i<=1013;i++)
 {
 students.push(new Student(i,i+" Name",i+" Mother",i+" Father"));
 }
