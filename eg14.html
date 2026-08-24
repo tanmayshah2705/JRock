@@ -1,0 +1,715 @@
+<!--this is the merged version of eg11(JRock) and eg13(Grid)-->
+
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<title>JRock grid</title>
+<style>
+.jrock_jmodalMask
+{
+width:100%;
+height:100%;
+top:0;
+left:0;
+border: 1px solid red;
+background: gray;
+position:fixed;
+opacity: 70%;
+}
+.jrock_jmodal
+{
+width:400px;
+min-width:400px;
+height:300px;
+min-height:300px;
+background-color:blue;
+position:fixed;
+top:0;
+left:0;
+bottom:0;
+right:0;
+margin:auto;
+border:2px solid white;
+}
+.jrock_jcloseButton
+{
+float:right;
+padding:2px 7px;
+cursor:pointer;
+margin-right:5px;
+margin-top:2px;
+font-size:14pt;
+}
+/*          grid	  */
+
+.jrock_jgrid_header_division
+{
+overflow-x:hidden;
+overflow-y:scroll;
+}
+.jrock_jgrid_body_division
+{
+overflow-x:auto;
+overflow-y:auto;
+}
+
+.jrock_jgrid_head
+{
+border:1px groove green;
+border-bottom:0px;
+border-spacing:0px;
+border-collapse:collapse;
+background:lightgray;
+}
+.jrock_jgrid_head td
+{
+border-left:1px groove red;
+border-right:1px groove red;
+border-top:1px groove red;
+border-bottom:0px;
+text-align:center;
+}
+
+/*.jrock_jgrid_head td+td
+{
+text-align:left;
+}
+.jrock_jgrid_head td+td+td
+{
+text-align:left;
+}
+.jrock_jgrid_head td+td+td+td
+{
+text-align:left;
+}
+.jrock_jgrid_head td+td+td+td+td
+{
+text-align:left;
+}
+*/
+
+.jrock_jgrid_body
+{
+border:1px groove green;
+border-spacing:0px;
+border-collapse:collapse;
+}
+.jrock_jgrid_body td
+{
+border:1px groove red;
+text-align:center;
+}
+
+/*.jrock_jgrid_body td+td
+{
+text-align:left;
+}
+.jrock_jgrid_body td+td+td
+{
+text-align:left;
+}
+.jrock_jgrid_body td+td+td+td
+{
+text-align:left;
+}
+.jrock_jgrid_body td+td+td+td+td
+{
+text-align:left;
+}
+*/
+
+.jrock_jgrid_pagination td
+{
+width:20px;
+text-align:center;
+}
+.jrock_jgrid_pagination_division
+{
+margin-top:20px;
+}
+.jrock_jgrid_pagination a
+{
+background-color:red;
+color:white;
+padding: 10px 18px;
+text-decoration:none;
+text-transform:uppercase;
+}
+</style>
+
+
+
+<!-- user specific styling-->
+<style>
+.someStyle
+{
+
+}
+</style>
+
+
+
+
+
+
+
+
+<script>
+//////////////////////////////////////
+///////JRock library starts here//////
+
+function $$$(cid){
+let element=document.getElementById(cid);
+if(!element) throw "Invalid id : "+cid;
+return new JRockElement(element);
+}
+
+$$$.model={
+"onStartup":[],
+"accordions":[],
+"modals":[],
+"grids":[]
+};
+
+/////////gpt's grid specific code starts here
+class Grid
+{
+    constructor(gridElement)
+    {
+	var objectAddress=this;
+        this.element=gridElement;
+
+//Grid configuration
+        this.width=0;
+        this.height=0;
+        this.headings=[];
+        this.columnsWidth=[];
+	this.tableWidth=0;
+        this.pagination=false;
+        this.pageSize=0;
+        this.headingColor=null;
+        this.cellColor=null;
+        this.paginationbuttonColor=null;
+	
+//Grid data
+        this.data=[];
+//Pagination state
+        this.pageNumber=1;
+        this.numberOfPaginationControls=5;
+//Internal Grid elements
+        this.headerDivision=null;
+        this.bodyDivision=null;
+        this.paginationDivision=null;
+        this.headerTable=null;
+        this.dataTable=null;
+        this.paginationTable=null;
+
+        if(!gridElement.hasAttribute("size")) throw "size attribute is required for a Grid";
+        let size=gridElement.getAttribute("size");
+        let xpos=size.indexOf("x");
+        if(xpos==-1) xpos=size.indexOf("X");
+        if(xpos==-1) throw "In case of Grid, size should be specified as widthxheight";
+        if(xpos==0 || xpos==size.length-1) throw "In case of Grid, size should be specified as widthxheight";
+        let width=size.substring(0,xpos);
+        let height=size.substring(xpos+1);
+        if(isNaN(width) || isNaN(height)) throw "In case of Grid, width and height should be numbers";
+        this.width=parseInt(width);
+        this.height=parseInt(height);
+        if(this.width<=0 || this.height<=0) throw "In case of Grid, width and height should be greater than zero";
+
+        if(!gridElement.hasAttribute("headings")) throw "headings attribute is required for a Grid";
+        let headingsValue=gridElement.getAttribute("headings");
+        try{ this.headings=JSON.parse(headingsValue); }
+        catch(e){ throw "headings attribute should contain a valid array"; }
+        if(!Array.isArray(this.headings)) throw "headings attribute should contain an array";
+
+        if(!gridElement.hasAttribute("columnsWidth")) throw "columnsWidth attribute is required for a Grid";
+        let columnsWidthValue=gridElement.getAttribute("columnsWidth");
+        try{ this.columnsWidth=JSON.parse(columnsWidthValue); }
+        catch(e){ throw "columnsWidth attribute should contain a valid array"; }
+        if(!Array.isArray(this.columnsWidth)) throw "columnsWidth attribute should contain an array";
+        if(this.headings.length!=this.columnsWidth.length) throw "Number of headings must be equal to number of column widths";
+        for(let i=0;i<this.columnsWidth.length;i++)
+	{
+        if(isNaN(this.columnsWidth[i])) throw "Every value in columnsWidth should be a number";
+        this.columnsWidth[i]=parseInt(this.columnsWidth[i]);
+        if(this.columnsWidth[i]<=0) throw "Every value in columnsWidth should be greater than zero";
+	this.tableWidth+=this.columnsWidth[i];
+        }
+
+        if(gridElement.hasAttribute("pagination"))
+        {
+            let paginationValue=gridElement.getAttribute("pagination");
+            if(paginationValue.toLowerCase()!="true" && paginationValue.toLowerCase()!="false") throw "pagination attribute should be true or false";
+            this.pagination=paginationValue.toLowerCase()=="true";
+        
+        if(this.pagination)
+        {
+            if(!gridElement.hasAttribute("pageSize")) throw "pageSize attribute is required when pagination is true";
+            let pageSizeValue=gridElement.getAttribute("pageSize");
+            if(isNaN(pageSizeValue)) throw "pageSize attribute should be a number";
+            this.pageSize=parseInt(pageSizeValue);
+            if(this.pageSize<=0) throw "pageSize attribute should be greater than zero";
+        }
+	}
+
+	
+
+        if(gridElement.hasAttribute("headingColor")) this.headingColor=gridElement.getAttribute("headingColor");
+        if(gridElement.hasAttribute("cellColor")) this.cellColor=gridElement.getAttribute("cellColor"); 
+        if(gridElement.hasAttribute("paginationbuttonColor")) this.paginationbuttonColor=gridElement.getAttribute("paginationbuttonColor");
+
+
+// Create Grid structure
+        this.headerDivision=document.createElement("div");
+        this.headerDivision.classList.add("jrock_jgrid_header_division");
+        this.headerDivision.style.width=this.width+"px";
+	this.element.appendChild(this.headerDivision);
+        this.bodyDivision=document.createElement("div");
+        this.bodyDivision.classList.add("jrock_jgrid_body_division");
+        this.bodyDivision.style.width=this.width+"px";
+        this.bodyDivision.style.height=this.height+"px";
+	this.element.appendChild(this.bodyDivision);
+	if(this.pagination){
+            this.paginationDivision=document.createElement("div");
+            this.paginationDivision.classList.add("jrock_jgrid_pagination_division");
+            this.paginationTable=document.createElement("table");
+            this.paginationTable.classList.add("jrock_jgrid_pagination");
+            this.paginationDivision.appendChild(this.paginationTable);
+            this.element.appendChild(this.paginationDivision);
+	}
+        this.headerTable=document.createElement("table");
+        this.headerTable.classList.add("jrock_jgrid_head");
+	this.headerTable.style.width=this.tableWidth+"px";
+	this.headerTable.style.minWidth=this.tableWidth+"px";
+	this.headerDivision.appendChild(this.headerTable);
+        this.dataTable=document.createElement("table");
+        this.dataTable.classList.add("jrock_jgrid_body");
+	this.dataTable.style.width=this.tableWidth+"px";
+	this.dataTable.style.minWidth=this.tableWidth+"px";
+	this.bodyDivision.appendChild(this.dataTable);
+
+        let tr=document.createElement("tr");
+        for(let i=0;i<this.headings.length;i++){
+            let td=document.createElement("td");
+            td.innerHTML=this.headings[i];
+            td.style.width=this.columnsWidth[i]+"px";
+            if(this.headingColor) td.style.backgroundColor=this.headingColor;
+            tr.appendChild(td);
+        }
+        this.headerTable.appendChild(tr);
+///////////////////////////////
+for(let i=101;i<200;i++)
+{
+    let tr=document.createElement("tr");
+        for(let j=0;j<this.headings.length;j++)
+	{
+            let td=document.createElement("td");
+            td.innerHTML=(i)+" "+this.headings[j];
+            td.style.width=this.columnsWidth[j]+"px";
+            if(this.cellColor) td.style.backgroundColor=this.cellColor;
+            tr.appendChild(td);
+        }
+    this.dataTable.appendChild(tr);
+}
+///////////////////////////////
+
+        this.bodyDivision.addEventListener("scroll",function(){
+                objectAddress.headerDivision.scrollLeft=objectAddress.bodyDivision.scrollLeft;
+            }
+        );
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+$$$.initFramework=function()
+{
+////////code for setting up accordions, onStartup, modals code starts here////////
+
+
+//////// setting up grids code starts here
+var allTags=document.getElementsByTagName("*");
+i=0;
+while(i<allTags.length)
+{
+    if(allTags[i].hasAttribute("grid"))
+    {
+        if(allTags[i].getAttribute("grid").toLowerCase()=="true")
+        {
+            allTags[i].setAttribute("grid","false");
+            $$$.model.grids[$$$.model.grids.length]=new Grid(allTags[i]);
+            continue;
+        }
+    }
+    ++i;
+}
+
+}// initFramework func ends here
+
+
+
+function JRockElement(element)
+{
+this.element=element;
+
+// html() function
+// value() function
+// fillComboBox() function
+
+} // class JRockElement ends
+
+
+
+
+$$$.ajax=function(jsonObject)
+{
+if(!jsonObject["url"]) throw "url is missing in call to ajax";
+let url = jsonObject["url"];
+if((typeof url)!="string") throw "url property should be of string type";
+let methodType="GET";
+if(jsonObject["methodType"])
+{
+methodType=jsonObject["methodType"];
+if((typeof methodType)!="string") throw "methodType property should be of string type in call to ajax";
+methodType=methodType.toUpperCase();
+if(["GET","POST"].includes(methodType)==false) throw "methodType should be GET/POST in call to ajax"; 
+}
+let onSuccess=null;
+if(jsonObject["success"])
+{
+onSuccess=jsonObject["success"];
+if((typeof onSuccess)!="function") throw "success property should be a function in call to ajax";
+}
+let onFailure=null;
+if(jsonObject["failure"])
+{
+onFailure=jsonObject["failure"];
+if((typeof onFailure)!="function") throw "failure property should be a function in call to ajax";
+}
+
+if(methodType=="GET")
+{
+var xmlHttpRequest = new XMLHttpRequest();
+xmlHttpRequest.onreadystatechange=function(){
+if(this.readyState==4)
+{
+if(this.status==200)
+{
+var responseData = this.responseText;
+if(onSuccess) onSuccess(responseData);
+}
+else
+{
+if(onFailure) onFailure();
+}
+}
+};
+if(jsonObject["data"])
+{
+let jsonData = jsonObject["data"];
+let querystr="";
+let qsName;
+let qsValue;
+let i=0;
+for(key in jsonData)
+{
+if(i==0) querystr="?";
+if(i>0) querystr+="&";
+i++;
+qsName=encodeURI(key);
+qsValue=encodeURI(jsonData[key]);
+querystr=querystr+qsName+"="+qsValue;
+}
+url+=querystr; 
+}
+
+xmlHttpRequest.open(methodType,url,true);
+xmlHttpRequest.send();
+}
+
+if(methodType=="POST")
+{
+var xmlHttpRequest = new XMLHttpRequest();
+xmlHttpRequest.onreadystatechange=function(){
+if(this.readyState==4)
+{
+if(this.status==200)
+{
+var responseData = this.responseText;
+if(onSuccess) onSuccess(responseData);
+}
+else
+{
+if(onFailure) onFailure();
+}
+}
+};
+
+let jsonData={};
+let sendJSON=jsonObject["sendJSON"];
+if(!sendJSON) sendJSON=false;
+if(typeof sendJSON!="boolean") throw "sendJSON property should be of boolean type in call to ajax";
+let querystr="";
+if(jsonObject["data"])
+{
+if(sendJSON)
+{
+jsonData = jsonObject["data"];
+}
+else
+{
+querystr="";
+let qsName;
+let qsValue;
+let i=0;
+for(key in data)
+{
+//if(i==0) querystr="?";
+if(i>0) querystr+="&";
+i++;
+qsName=encodeURI(key);
+qsValue=encodeURI(data[key]);
+querystr=querystr+qsName+"="+qsValue;
+}
+}
+}
+xmlHttpRequest.open(methodType,url,true);
+
+if(sendJSON)
+{
+xmlHttpRequest.setRequestHeader("Content-type","application/json");
+xmlHttpRequest.send(JSON.stringify(jsonData));
+}
+else
+{
+xmlHttpRequest.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+xmlHttpRequest.send(querystr);
+}
+
+}
+}
+
+window.addEventListener('load',function(){
+$$$.initFramework();
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Student
+{
+constructor(rollNumber,name,nameOfMother,nameOfFather)
+{
+this.rollNumber=rollNumber;
+this.name=name;
+this.nameOfMother=nameOfMother;
+this.nameOfFather=nameOfFather;
+}
+}
+
+class Grid
+{
+constructor(dataTableId,dataTablePaginationId,students,pageSize)
+{
+this.dataTableId=dataTableId;
+this.dataTablePaginationId=dataTablePaginationId;
+this.students=students;
+this.pageSize=pageSize;
+this.pageNumber=1;
+this.numberOfPaginationControls=5;
+this.update();
+this.updatePagination();
+}
+setPage(pageNumber)
+{
+this.pageNumber=pageNumber;
+this.update();
+this.updatePagination();
+return false;
+}
+update()
+{
+var dataTable=document.getElementById(this.dataTableId);
+while(dataTable.rows.length>0) dataTable.deleteRow(0);
+var tr;
+var td;
+var startFromIndex=(this.pageNumber-1)*this.pageSize;
+var endAtIndex=startFromIndex+this.pageSize-1;
+if(endAtIndex>=this.students.length) endAtIndex=this.students.length-1;
+var x;
+for(x=startFromIndex;x<=endAtIndex;x++)
+{
+tr=document.createElement("tr");
+td=document.createElement("td");
+td.innerHTML=(x+1);
+tr.appendChild(td);
+td=document.createElement("td");
+td.innerHTML=this.students[x].rollNumber;
+tr.appendChild(td);
+td=document.createElement("td");
+td.innerHTML=this.students[x].name;
+tr.appendChild(td);
+td=document.createElement("td");
+td.innerHTML=this.students[x].nameOfMother;
+tr.appendChild(td);
+td=document.createElement("td");
+td.innerHTML=this.students[x].nameOfFather;
+tr.appendChild(td);
+dataTable.appendChild(tr);
+}
+}
+updatePagination()
+{
+function createPageChangeFunction(obj,pageNumber)
+{
+return function(){
+obj.setPage(pageNumber);
+};
+}
+var startFrom=((Math.floor((this.pageNumber-1)/this.numberOfPaginationControls)+1)-1)*this.numberOfPaginationControls+1;
+var endAt=startFrom+this.numberOfPaginationControls-1;
+var numberOfPages=Math.floor(this.students.length/this.pageSize);
+if(this.students.length%this.pageSize!=0) numberOfPages++;
+if(endAt>numberOfPages) endAt=numberOfPages;
+var dataTablePagination=document.getElementById(this.dataTablePaginationId);
+while(dataTablePagination.rows.length>0) dataTablePagination.deleteRow(0);
+var x;
+var tr;
+var td;
+var anchor;
+tr=document.createElement("tr");
+if(startFrom>1)
+{
+td=document.createElement("td");
+anchor=document.createElement("a");
+anchor.text="prev";
+anchor.href='javascript:void(0)';
+anchor.onclick=createPageChangeFunction(this,startFrom-1);
+td.appendChild(anchor);
+tr.appendChild(td);
+}
+for(x=startFrom;x<=endAt;x++)
+{
+td=document.createElement("td");
+if(x==this.pageNumber)
+{
+td.innerHTML="<b>"+x+"</b>";
+}
+else
+{
+anchor=document.createElement("a");
+anchor.text=x;
+anchor.href='javascript:void(0)';
+let objectAddress=this;
+anchor.onclick=createPageChangeFunction(this,x);
+td.appendChild(anchor);
+}
+tr.appendChild(td);
+}
+if(endAt<numberOfPages)
+{
+td=document.createElement("td");
+anchor=document.createElement("a");
+anchor.text="next";
+anchor.href='javascript:void(0)';
+anchor.onclick=createPageChangeFunction(this,endAt+1);
+td.appendChild(anchor);
+tr.appendChild(td);
+}
+dataTablePagination.appendChild(tr);
+}
+}
+
+var model={
+"grid":null
+};
+
+function loader()
+{
+var jrock_jgrid_header_division=document.querySelector(".jrock_jgrid_header_division");
+var jrock_jgrid_body_division=document.querySelector(".jrock_jgrid_body_division");
+jrock_jgrid_body_division.addEventListener('scroll',function(){
+jrock_jgrid_header_division.scrollLeft=jrock_jgrid_body_division.scrollLeft;
+});
+
+var i;
+var students=new Array();
+for(i=101;i<=1013;i++)
+{
+students.push(new Student(i,i+" Name",i+" Mother",i+" Father"));
+}
+model.grid=new Grid('dataTable','dataTablePagination',students,35);
+}
+window.addEventListener('load',loader);
+*/
+</script>
+</head>
+
+
+
+<body>
+<div class='someStyle' id="testGrid" grid="true" size="600x500" pagination="true" pageSize="10" headings='["apple","banana","mango","orange","guava"]' columnsWidth='[100,200,200,200,100]' headingColor="lightgray" cellColor="white" paginationbuttonColor="blue">
+
+<!--
+<div class="jrock_jgrid_header_division">
+<table class="jrock_jgrid_head">
+<tr>
+<td>S. No.</td>
+<td>Roll No.</td>
+<td>Name</td>
+<td>Mother</td>
+<td>Father</td>
+</tr>
+</table>
+</div>
+<div class="jrock_jgrid_body_division">
+<table class="jrock_jgrid_body" id="dataTable">
+</table>
+</div>
+<div class ="jrock_jgrid_pagination_division">
+<table class='jrock_jgrid_pagination' id='dataTablePagination'>
+</table>
+</div>
+-->
+
+</div>
+</body>
+</html>
