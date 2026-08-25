@@ -41,19 +41,16 @@ margin-right:5px;
 margin-top:2px;
 font-size:14pt;
 }
-/*          grid	  */
-
 .jrock_jgrid_header_division
 {
 overflow-x:hidden;
-overflow-y:scroll;
+overflow-y:hidden;
 }
 .jrock_jgrid_body_division
 {
 overflow-x:auto;
 overflow-y:auto;
 }
-
 .jrock_jgrid_head
 {
 border-bottom:0px;
@@ -61,15 +58,27 @@ border-spacing:0px;
 border-collapse:collapse;
 background:lightgray;
 text-align:center;
+table-layout:fixed;
 }
-
 .jrock_jgrid_body
 {
 border-spacing:0px;
 border-collapse:collapse;
 text-align:center;
+table-layout:fixed;
 }
-
+.jrock_jgrid_head td
+{
+box-sizing:border-box;
+overflow:hidden;
+white-space:nowrap;
+}
+.jrock_jgrid_body td
+{
+box-sizing:border-box;
+overflow:hidden;
+white-space:nowrap;
+}
 .jrock_jgrid_pagination td
 {
 width:20px;
@@ -91,24 +100,14 @@ text-transform:uppercase;
 
 
 
-<!-- user specific styling-->
-<style>
-.someStyle
-{
-
-}
-</style>
-
-
-
 
 
 
 
 
 <script>
-//////////////////////////////////////
-///////JRock library starts here//////
+///////////////////////////
+///////JRock library///////
 
 function $$$(cid){
 let element=document.getElementById(cid);
@@ -123,196 +122,536 @@ $$$.model={
 "grids":[]
 };
 
-/////////gpt's grid specific code starts here
+////////// grid specific code starts here
 class Grid
 {
-    constructor(gridElement)
-    {
-	var objectAddress=this;
-        this.element=gridElement;
-
-//Grid configuration
-        this.width=0;
-        this.height=0;
-        this.headings=[];
-        this.columnsWidth=[];
-	this.tableWidth=0;
-        this.pagination=false;
-        this.pageSize=0;
-        this.headingColor=null;
-        this.cellColor=null;
-        this.paginationbuttonColor=null;
-	this.border=null;
-//Grid data
-        this.data=[];
-//Pagination state
-        this.pageNumber=1;
-        this.numberOfPaginationControls=5;
-//Internal Grid elements
-        this.headerDivision=null;
-        this.bodyDivision=null;
-        this.paginationDivision=null;
-        this.headerTable=null;
-        this.dataTable=null;
-        this.paginationTable=null;
-
-        if(!gridElement.hasAttribute("size")) throw "size attribute is required for a Grid";
-        let size=gridElement.getAttribute("size");
-        let xpos=size.indexOf("x");
-        if(xpos==-1) xpos=size.indexOf("X");
-        if(xpos==-1) throw "In case of Grid, size should be specified as widthxheight";
-        if(xpos==0 || xpos==size.length-1) throw "In case of Grid, size should be specified as widthxheight";
-        let width=size.substring(0,xpos);
-        let height=size.substring(xpos+1);
-        if(isNaN(width) || isNaN(height)) throw "In case of Grid, width and height should be numbers";
-        this.width=parseInt(width);
-        this.height=parseInt(height);
-        if(this.width<=0 || this.height<=0) throw "In case of Grid, width and height should be greater than zero";
-
-        if(!gridElement.hasAttribute("headings")) throw "headings attribute is required for a Grid";
-        let headingsValue=gridElement.getAttribute("headings");
-        try{ this.headings=JSON.parse(headingsValue); }
-        catch(e){ throw "headings attribute should contain a valid array"; }
-        if(!Array.isArray(this.headings)) throw "headings attribute should contain an array";
-
-        if(!gridElement.hasAttribute("columnsWidth")) throw "columnsWidth attribute is required for a Grid";
-        let columnsWidthValue=gridElement.getAttribute("columnsWidth");
-        try{ this.columnsWidth=JSON.parse(columnsWidthValue); }
-        catch(e){ throw "columnsWidth attribute should contain a valid array"; }
-        if(!Array.isArray(this.columnsWidth)) throw "columnsWidth attribute should contain an array";
-        if(this.headings.length!=this.columnsWidth.length) throw "Number of headings must be equal to number of column widths";
-        for(let i=0;i<this.columnsWidth.length;i++)
-	{
-        if(isNaN(this.columnsWidth[i])) throw "Every value in columnsWidth should be a number";
-        this.columnsWidth[i]=parseInt(this.columnsWidth[i]);
-        if(this.columnsWidth[i]<=0) throw "Every value in columnsWidth should be greater than zero";
-	this.tableWidth+=this.columnsWidth[i];
-        }
-
-        if(gridElement.hasAttribute("pagination"))
-        {
-            let paginationValue=gridElement.getAttribute("pagination");
-            if(paginationValue.toLowerCase()!="true" && paginationValue.toLowerCase()!="false") throw "pagination attribute should be true or false";
-            this.pagination=paginationValue.toLowerCase()=="true";
-        
-        if(this.pagination)
-        {
-            if(!gridElement.hasAttribute("pageSize")) throw "pageSize attribute is required when pagination is true";
-            let pageSizeValue=gridElement.getAttribute("pageSize");
-            if(isNaN(pageSizeValue)) throw "pageSize attribute should be a number";
-            this.pageSize=parseInt(pageSizeValue);
-            if(this.pageSize<=0) throw "pageSize attribute should be greater than zero";
-        }
-	}
-
-	if(gridElement.hasAttribute("border"))
-	{
-	    let borderValue=gridElement.getAttribute("border");
-	    if(!CSS.supports("border",borderValue)) throw "border attribute should contain a valid CSS border value";
-	    this.border=borderValue;
-	}
-
-        if(gridElement.hasAttribute("headingColor")) this.headingColor=gridElement.getAttribute("headingColor");
-        if(gridElement.hasAttribute("cellColor")) this.cellColor=gridElement.getAttribute("cellColor"); 
-        if(gridElement.hasAttribute("paginationbuttonColor")) this.paginationbuttonColor=gridElement.getAttribute("paginationbuttonColor");
-
-
-// Create Grid structure
-        this.headerDivision=document.createElement("div");
-        this.headerDivision.classList.add("jrock_jgrid_header_division");
-        this.headerDivision.style.width=this.width+"px";
-	this.element.appendChild(this.headerDivision);
-        this.bodyDivision=document.createElement("div");
-        this.bodyDivision.classList.add("jrock_jgrid_body_division");
-        this.bodyDivision.style.width=this.width+"px";
-        this.bodyDivision.style.height=this.height+"px";
-	this.element.appendChild(this.bodyDivision);
-	if(this.pagination){
-            this.paginationDivision=document.createElement("div");
-            this.paginationDivision.classList.add("jrock_jgrid_pagination_division");
-            this.paginationTable=document.createElement("table");
-            this.paginationTable.classList.add("jrock_jgrid_pagination");
-            this.paginationDivision.appendChild(this.paginationTable);
-            this.element.appendChild(this.paginationDivision);
-	}
-        this.headerTable=document.createElement("table");
-        this.headerTable.classList.add("jrock_jgrid_head");
-	this.headerTable.style.width=this.tableWidth+"px";
-	this.headerTable.style.minWidth=this.tableWidth+"px";
-	this.headerDivision.appendChild(this.headerTable);
-        this.dataTable=document.createElement("table");
-        this.dataTable.classList.add("jrock_jgrid_body");
-	this.dataTable.style.width=this.tableWidth+"px";
-	this.dataTable.style.minWidth=this.tableWidth+"px";
-	this.bodyDivision.appendChild(this.dataTable);
-
-        let tr=document.createElement("tr");
-        for(let i=0;i<this.headings.length;i++){
-            let td=document.createElement("td");
-            td.innerHTML=this.headings[i];
-            td.style.width=this.columnsWidth[i]+"px";
-            if(this.headingColor) td.style.backgroundColor=this.headingColor;
-	    if(this.border){ td.style.borderLeft=this.border; td.style.borderTop=this.border; td.style.borderRight=this.border; }
-            tr.appendChild(td);
-        }
-        this.headerTable.appendChild(tr);
-///////////////////////////////
-/*for(let i=101;i<200;i++)
+constructor(gridElement)
 {
-    let tr=document.createElement("tr");
-        for(let j=0;j<this.headings.length;j++)
-	{
-            let td=document.createElement("td");
-            td.innerHTML=(i)+" "+this.headings[j];
-            td.style.width=this.columnsWidth[j]+"px";
-            if(this.cellColor) td.style.backgroundColor=this.cellColor;
-	    if(this.border) td.style.border=this.border;
-            tr.appendChild(td);
-        }
-    this.dataTable.appendChild(tr);
-}*/
-///////////////////////////////
+var objectAddress=this;
+this.element=gridElement;
 
-        this.bodyDivision.addEventListener("scroll",function(){
-                objectAddress.headerDivision.scrollLeft=objectAddress.bodyDivision.scrollLeft;
-            }
-        );
+this.width=0;
+this.height=0;
+this.headings=[];
+this.columnsWidth=[];
+this.tableWidth=0;
+this.pagination=false;
+this.pageSize=0;
+this.headingColor=null;
+this.cellColor=null;
+this.paginationbuttonColor=null;
+this.border=null;
+this.data=[];
+this.pageNumber=1;
+this.numberOfPaginationControls=5;
+this.headerDivision=null;
+this.bodyDivision=null;
+this.paginationDivision=null;
+this.headerTable=null;
+this.dataTable=null;
+this.paginationTable=null;
 
-    }
+if(!gridElement.hasAttribute("size")) throw "size attribute is required for a Grid";
+let size=gridElement.getAttribute("size");
+let xpos=size.indexOf("x");
+if(xpos==-1) xpos=size.indexOf("X");
+if(xpos==-1) throw "In case of Grid, size should be specified as widthxheight";
+if(xpos==0 || xpos==size.length-1) throw "In case of Grid, size should be specified as widthxheight";
+let width=size.substring(0,xpos);
+let height=size.substring(xpos+1);
+if(isNaN(width) || isNaN(height)) throw "In case of Grid, width and height should be numbers";
+this.width=parseInt(width);
+this.height=parseInt(height);
+if(this.width<=0 || this.height<=0) throw "In case of Grid, width and height should be greater than zero";
+
+if(!gridElement.hasAttribute("headings")) throw "headings attribute is required for a Grid";
+let headingsValue=gridElement.getAttribute("headings");
+try{ this.headings=JSON.parse(headingsValue); }
+catch(e){ throw "headings attribute should contain a valid array"; }
+if(!Array.isArray(this.headings)) throw "headings attribute should contain an array";
+
+if(!gridElement.hasAttribute("columnsWidth")) throw "columnsWidth attribute is required for a Grid";
+let columnsWidthValue=gridElement.getAttribute("columnsWidth");
+try{ this.columnsWidth=JSON.parse(columnsWidthValue); }
+catch(e){ throw "columnsWidth attribute should contain a valid array"; }
+if(!Array.isArray(this.columnsWidth)) throw "columnsWidth attribute should contain an array";
+if(this.headings.length!=this.columnsWidth.length) throw "Number of headings must be equal to number of column widths";
+for(let i=0;i<this.columnsWidth.length;i++)
+{
+if(isNaN(this.columnsWidth[i])) throw "Every value in columnsWidth should be a number";
+this.columnsWidth[i]=parseInt(this.columnsWidth[i]);
+if(this.columnsWidth[i]<=0) throw "Every value in columnsWidth should be greater than zero";
+this.tableWidth+=this.columnsWidth[i];
+}
+
+if(gridElement.hasAttribute("pagination"))
+{
+let paginationValue=gridElement.getAttribute("pagination");
+if(paginationValue.toLowerCase()!="true" && paginationValue.toLowerCase()!="false") throw "pagination attribute should be true or false";
+this.pagination=paginationValue.toLowerCase()=="true";
+
+if(this.pagination)
+{
+if(!gridElement.hasAttribute("pageSize")) throw "pageSize attribute is required when pagination is true";
+let pageSizeValue=gridElement.getAttribute("pageSize");
+if(isNaN(pageSizeValue)) throw "pageSize attribute should be a number";
+this.pageSize=parseInt(pageSizeValue);
+if(this.pageSize<=0) throw "pageSize attribute should be greater than zero";
+}
+if(gridElement.hasAttribute("numberOfPaginationControls"))
+{
+let numberOfPaginationControlsValue=gridElement.getAttribute("numberOfPaginationControls");
+if(isNaN(numberOfPaginationControlsValue)) throw "numberOfPaginationControls should be a valid integer";
+this.numberOfPaginationControls=parseInt(numberOfPaginationControlsValue);
+if(this.numberOfPaginationControls<=0) throw "numberOfPaginationControls must a positive integer";
+}
+}
+
+if(gridElement.hasAttribute("border"))
+{
+let borderValue=gridElement.getAttribute("border");
+if(!CSS.supports("border",borderValue)) throw "border attribute should contain a valid CSS border value";
+this.border=borderValue;
+}
+
+if(gridElement.hasAttribute("headingColor")) this.headingColor=gridElement.getAttribute("headingColor");
+if(gridElement.hasAttribute("cellColor")) this.cellColor=gridElement.getAttribute("cellColor"); 
+if(gridElement.hasAttribute("paginationbuttonColor")) this.paginationbuttonColor=gridElement.getAttribute("paginationbuttonColor");
+
+this.headerDivision=document.createElement("div");
+this.headerDivision.classList.add("jrock_jgrid_header_division");
+this.headerDivision.style.width=this.width+"px";
+this.element.appendChild(this.headerDivision);
+this.bodyDivision=document.createElement("div");
+this.bodyDivision.classList.add("jrock_jgrid_body_division");
+this.bodyDivision.style.width=this.width+"px";
+this.bodyDivision.style.height=this.height+"px";
+this.element.appendChild(this.bodyDivision);
+if(this.pagination)
+{
+this.paginationDivision=document.createElement("div");
+this.paginationDivision.classList.add("jrock_jgrid_pagination_division");
+this.paginationTable=document.createElement("table");
+this.paginationTable.classList.add("jrock_jgrid_pagination");
+this.paginationDivision.appendChild(this.paginationTable);
+this.element.appendChild(this.paginationDivision);
+}
+this.headerTable=document.createElement("table");
+this.headerTable.classList.add("jrock_jgrid_head");
+this.headerTable.style.width=this.tableWidth+"px";
+this.headerTable.style.minWidth=this.tableWidth+"px";
+this.headerDivision.appendChild(this.headerTable);
+this.dataTable=document.createElement("table");
+this.dataTable.classList.add("jrock_jgrid_body");
+this.dataTable.style.width=this.tableWidth+"px";
+this.dataTable.style.minWidth=this.tableWidth+"px";
+this.bodyDivision.appendChild(this.dataTable);
+
+let tr=document.createElement("tr");
+for(let i=0;i<this.headings.length;i++)
+{
+let td=document.createElement("td");
+td.innerHTML=this.headings[i];
+td.style.width=this.columnsWidth[i]+"px";
+if(this.headingColor) td.style.backgroundColor=this.headingColor;
+if(this.border){ td.style.borderLeft=this.border; td.style.borderTop=this.border; td.style.borderRight=this.border; 
+}
+tr.appendChild(td);
+}
+this.headerTable.appendChild(tr);
+
+this.bodyDivision.addEventListener("scroll",function(){
+objectAddress.headerDivision.scrollLeft=objectAddress.bodyDivision.scrollLeft;
+}
+);
+}
+
+update()
+{
+while(this.dataTable.rows.length>0) this.dataTable.deleteRow(0);
+let startFromIndex=0;
+let endAtIndex=this.data.length-1;
+if(this.pagination)
+{
+startFromIndex=(this.pageNumber-1)*this.pageSize;
+endAtIndex=startFromIndex+this.pageSize-1;
+if(endAtIndex>=this.data.length) endAtIndex=this.data.length-1;
+}
+for(let i=startFromIndex;i<=endAtIndex;i++)
+{
+let tr=document.createElement("tr");
+let propertyKeys=Object.keys(this.data[i]);
+for(let j=0;j<propertyKeys.length;j++)
+{
+let td=document.createElement("td");
+td.innerHTML=this.data[i][propertyKeys[j]];
+td.style.width=this.columnsWidth[j]+"px";
+if(this.cellColor!=null) td.style.backgroundColor=this.cellColor;
+if(this.border!=null) td.style.border=this.border;
+tr.appendChild(td);
+}
+this.dataTable.appendChild(tr);
+}
+
+if(this.bodyDivision.scrollHeight >this.bodyDivision.clientHeight) this.headerDivision.style.overflowY="scroll";
+else this.headerDivision.style.overflowY="hidden";
+}
+
+setPage(pageNumber)
+{
+this.pageNumber=pageNumber;
+this.update();
+this.updatePagination();
+return false;
+}
+
+updatePagination()
+{
+function createPageChangeFunction(obj,pageNumber)
+{
+return function(){
+obj.setPage(pageNumber);
+};
+}
+let startFrom=(Math.floor((this.pageNumber-1)/this.numberOfPaginationControls))*this.numberOfPaginationControls+1;
+let endAt=startFrom+this.numberOfPaginationControls-1;
+let numberOfPages=Math.ceil(this.data.length/this.pageSize);
+if(numberOfPages==0) return;
+if(endAt>numberOfPages) endAt=numberOfPages;
+while(this.paginationTable.rows.length>0) this.paginationTable.deleteRow(0);
+var x;
+var td;
+var tr;
+var anchor;
+tr=document.createElement("tr");
+if(startFrom>1)
+{
+td=document.createElement("td");
+anchor=document.createElement("a");
+anchor.text="prev";
+anchor.href="javascript:void(0)";
+anchor.onclick=createPageChangeFunction(this,startFrom-1);
+if(this.paginationbuttonColor!=null) anchor.style.backgroundColor=this.paginationbuttonColor;
+td.appendChild(anchor);
+tr.appendChild(td);
+}
+for(x=startFrom;x<=endAt;x++)
+{
+td=document.createElement("td");
+if(x==this.pageNumber) td.innerHTML="<b>"+x+"</b>";
+else
+{
+anchor=document.createElement("a");
+anchor.text=x;
+anchor.href="javascript:void(0)";
+anchor.onclick=createPageChangeFunction(this,x);
+if(this.paginationbuttonColor!=null) anchor.style.backgroundColor=this.paginationbuttonColor;
+td.appendChild(anchor);
+}
+tr.appendChild(td);
+}
+if(endAt<numberOfPages)
+{
+td=document.createElement("td");
+anchor=document.createElement("a");
+anchor.text="next";
+anchor.href="javascript:void(0)";
+anchor.onclick=createPageChangeFunction(this,endAt+1);
+if(this.paginationbuttonColor!=null) anchor.style.backgroundColor=this.paginationbuttonColor;
+td.appendChild(anchor);
+tr.appendChild(td);
+}
+this.paginationTable.appendChild(tr);
+}
+}
 
 
+/////////modal specific code starts here
+$$$.modals={};
+
+$$$.modals.show=function(mid)
+{
+let modal=null;
+for(var i=0;i<$$$.model.modals.length;i++)
+{
+if($$$.model.modals[i].getContentId()==mid){ modal=$$$.model.modals[i]; break; }
+}
+if(modal==null) return;
+modal.show();
+}
+
+function Modal(cref)
+{
+var objectAddress=this;
+this.beforeOpening=null;
+this.afterOpening=null;
+this.beforeClosing=null;
+this.afterClosing=null;
+var contentReference=cref;
+this.getContentId=function(){
+return contentReference.id;
+};
+var contentParentReference=contentReference.parentElement;
+var contentIndex=0;
+while(contentIndex < contentParentReference.children.length)
+{
+if(contentReference==contentParentReference.children[contentIndex]) break;
+++contentIndex;
+}
+var modalMaskDivision=document.createElement("div");
+modalMaskDivision.style.display="none";
+modalMaskDivision.classList.add("jrock_modalMask");
+var modalDivision=document.createElement("div");
+modalDivision.style.display="none";
+modalDivision.classList.add("jrock_modal");
+document.body.appendChild(modalMaskDivision);
+document.body.appendChild(modalDivision);
+
+var headerDivision=document.createElement("div");
+headerDivision.style.background	="red";
+headerDivision.style.right="0";
+headerDivision.style.height="40px";
+headerDivision.style.padding="5px";
+modalDivision.appendChild(headerDivision);
+
+if(contentReference.hasAttribute("size"))
+{
+var sz=contentReference.getAttribute("size");
+let xpos=sz.indexOf("x");
+if(xpos==-1) xpos=sz.indexOf("X");
+if(xpos==-1) throw "In case of modal, size should be specified as widthxheight";
+if(xpos==0 || xpos==sz.length-1) throw "In case of modal, size should be specified as widthxheight";
+let width=sz.substring(0,xpos);
+let height=sz.substring(xpos+1);
+modalDivision.style.width=width+"px";
+modalDivision.style.height=height+"px";
+}
+else
+{
+modalDivision.style.width="300px";
+modalDivision.style.height="300px";
+}
+if(contentReference.hasAttribute("header"))
+{
+var hd=contentReference.getAttribute("header");
+headerDivision.innerHTML=hd;
+}
+
+if(contentReference.hasAttribute("maskColor"))
+{
+var mkc=contentReference.getAttribute("maskColor");
+modalMaskDivision.style.background=mkc;
+}
+if(contentReference.hasAttribute("modalBackgroundColor"))
+{
+var mbc=contentReference.getAttribute("modalBackgroundColor");
+modalDivision.style.background=mbc;
+}
+
+var contentDivision=document.createElement("div");									
+contentDivision.style.height=(modalDivision.style.height.substring(0,modalDivision.style.height.length-2)-130)+"px";
+contentDivision.style.width="98%";
+contentDivision.style.overflow="auto";
+contentDivision.style.padding="5px";
+contentReference.remove();
+contentDivision.appendChild(contentReference);
+contentReference.style.display="block";
+contentReference.style.visibility="visible";
+modalDivision.appendChild(contentDivision);
+
+var footerDivision=document.createElement("div");
+footerDivision.style.background	="pink";
+footerDivision.style.left="0";
+footerDivision.style.right="0";
+footerDivision.style.height="40px";
+footerDivision.style.padding="5px";
+footerDivision.style.position="absolute";
+footerDivision.style.bottom="0";
+modalDivision.appendChild(footerDivision);
+
+if(contentReference.hasAttribute("footer"))
+{   
+var ft=contentReference.getAttribute("footer");
+footerDivision.innerHTML=ft;
+}
+
+var closeButtonSpan=null; 
+if(contentReference.hasAttribute("closeButton"))
+{
+var cb=contentReference.getAttribute("closeButton");
+if(cb.toLowerCase()=="true")
+{
+closeButtonSpan=document.createElement("span");
+closeButtonSpan.classList.add("jrock_closeButton");
+var closeButtonMarker=document.createTextNode("x");
+closeButtonSpan.appendChild(closeButtonMarker);
+headerDivision.appendChild(closeButtonSpan);
+}
+}
+
+if(contentReference.hasAttribute("beforeOpening"))
+{
+var bo=contentReference.getAttribute("beforeOpening");
+this.beforeOpening=bo;
+}
+if(contentReference.hasAttribute("afterOpening"))
+{
+var ao=contentReference.getAttribute("afterOpening");
+this.afterOpening=ao;
+}
+if(contentReference.hasAttribute("beforeClosing"))
+{
+var bc=contentReference.getAttribute("beforeClosing");
+this.beforeClosing=bc;
+} 
+if(contentReference.hasAttribute("afterClosing"))
+{
+var ac=contentReference.getAttribute("afterClosing");
+this.afterClosing=ac;
+} 
+
+this.show=function(){
+let openModal=true;
+if(this.beforeOpening)
+{
+openModal=eval(this.beforeOpening);
+}
+if(openModal)
+{
+modalDivision.style.display="block";
+modalMaskDivision.style.display="block";
+if(this.afterOpening) setTimeout(function(){eval(objectAddress.afterOpening);},100);
+}
+};
+
+if(closeButtonSpan!=null)
+{
+closeButtonSpan.onclick=function(){
+let closeModal=true;
+if(objectAddress.beforeClosing)
+{
+closeModal=eval(objectAddress.beforeClosing);
+} 
+if(closeModal)
+{
+modalDivision.style.display="none";
+modalMaskDivision.style.display="none";
+if(objectAddress.afterClosing) setTimeout(function(){eval(objectAddress.afterClosing);},100);
+}
+};
+}
 }
 
 
 
+/////////accordion specific code starts here
+$$$.accordionHeadingClicked=function(accordionIndex,panelIndex)
+{
+if($$$.model.accordions[accordionIndex].expandedIndex!=-1) $$$.model.accordions[accordionIndex].panels[$$$.model.accordions[accordionIndex].expandedIndex].style.display = "none";
+$$$.model.accordions[accordionIndex].panels[panelIndex+1].style.display=$$$.model.accordions[accordionIndex].panels[panelIndex+1].oldDisplay;
+$$$.model.accordions[accordionIndex].expandedIndex=panelIndex+1;
+}
 
+$$$.toAccordion=function(accordion)
+{
+let panels=[];
+let expandedIndex=-1;
+let children=accordion.childNodes;
+let headings=['H1','H2','H3','H4','H5','H6'];
+let i;
+for(i=0; i<children.length; i++)
+{
+//if(children[i].nodeName=="H3") panels[panels.length]=children[i];
+if(headings.includes(children[i].nodeName)) panels[panels.length]=children[i];
+if(children[i].nodeName=="DIV") panels[panels.length]=children[i];
+}
+if(panels.length%2!=0) throw "Headings and divisions malformed to create accordion because its not even";
+for(i=0;i<panels.length;i+=2)
+{
+//if(panels[i].nodeName!="H3") throw "Headings and divisions malformed to create accordion because its not H3 at index"+i;
+if(!headings.includes(panels[i].nodeName)) throw "Headings and divisions malformed to create accordion because its not a 'Heading' at index "+i;
+if(panels[i+1].nodeName!="DIV") throw "Headings and divisions malformed to create accordion because its not Div at index"+i;
+}
+function createClickHandler(accordionIndex,panelIndex)
+{
+return function(){
+$$$.accordionHeadingClicked(accordionIndex,panelIndex);
+};
+}
+let accordionIndex=$$$.model.accordions.length;
+for(i=0;i<panels.length;i+=2)
+{
+panels[i].onclick=createClickHandler(accordionIndex,i);
+panels[i+1].oldDisplay=panels[i+1].style.display;
+panels[i+1].style.display="none";
+}
+$$$.model.accordions[accordionIndex]={
+"panels":panels,
+"expandedIndex":-1
+};
+}
+
+$$$.onDocumentLoaded=function(func){
+if(typeof func!="function") throw "Expected function, found "+(typeof func)+" in call to onDocumentLoaded";
+$$$.model.onStartup[$$$.model.onStartup.length]=func;
+}
 
 
 
 
 $$$.initFramework=function()
 {
-////////code for setting up accordions, onStartup, modals code starts here////////
+//////// setting up accordions code starts here
+let allTags=document.getElementsByTagName("*");
+let i;
+for(i=0;i<allTags.length;i++)
+{
+if(allTags[i].hasAttribute("accordion"))
+{
+if(allTags[i].getAttribute("accordion")=="true")
+{
+$$$.toAccordion(allTags[i]);
+}
+}
+}
+for(let x=0;x<$$$.model.onStartup.length;x++)
+$$$.model.onStartup[x]();
 
+//////// setting up modals code starts here
+allTags=document.getElementsByTagName("*");
+i=0;
+while(i<allTags.length)
+{
+if(allTags[i].hasAttribute("forModal"))
+{
+if(allTags[i].getAttribute("forModal").toLowerCase()=="true")
+{
+allTags[i].setAttribute("forModal","false");
+$$$.model.modals[$$$.model.modals.length]=new Modal(allTags[i]);
+continue;
+}
+}
+++i;
+}
 
 //////// setting up grids code starts here
 var allTags=document.getElementsByTagName("*");
 i=0;
 while(i<allTags.length)
 {
-    if(allTags[i].hasAttribute("grid"))
-    {
-        if(allTags[i].getAttribute("grid").toLowerCase()=="true")
-        {
-            allTags[i].setAttribute("grid","false");
-            $$$.model.grids[$$$.model.grids.length]=new Grid(allTags[i]);
-            continue;
-        }
-    }
-    ++i;
+if(allTags[i].hasAttribute("grid"))
+{
+if(allTags[i].getAttribute("grid").toLowerCase()=="true")
+{
+allTags[i].setAttribute("grid","false");
+$$$.model.grids[$$$.model.grids.length]=new Grid(allTags[i]);
+continue;
+}
+}
+++i;
 }
 
-}// initFramework func ends here
+}
 
 
 
@@ -321,45 +660,110 @@ function JRockElement(element)
 this.element=element;
 
 // html() function
+this.html=function(content)
+{
+if(typeof this.element.innerHTML=="string")
+{
+if(typeof content=="string")
+{
+this.element.innerHTML=content;
+}
+return this.element.innerHTML;
+}
+return null;
+} 
+
 // value() function
+this.value=function(content)
+{
+if(typeof this.element.value)
+{
+if(typeof content=="string")
+{
+this.element.value=content;
+}
+return this.element.value;
+}
+return null;
+}
+
 // fillComboBox() function
+this.fillComboBox=function(jsonObject)
+{
+if(this.element.nodeName!="SELECT") throw "fillComboBox can be called on a SELECT type object only";
+if(!jsonObject["dataSource"]) throw "\'dataSource\' property is missing in fillComboBox function's parameter";
+if(!jsonObject["text"]) throw "\'text\' property is missing in fillComboBox function's parameter";
+if(!jsonObject["value"]) throw "\'value\' property is missing in fillComboBox function's parameter";
+if(!Array.isArray(jsonObject["dataSource"])) throw "\'dataSource\' property should be a collection in fillComboBox function's parameter";
+if(typeof jsonObject["text"]!="string") throw "\'text\' property should be of string type in fillComboBox function's parameter";
+if(typeof jsonObject["value"]!="string") throw "\'value\' property should be of string type in fillComboBox function's parameter";
+for(let obj of jsonObject["dataSource"]) //to check if values against text and value property is part of dataSource element
+{
+if(!obj[jsonObject["text"]]) throw "value against \'text\' property is not found in dataSource element";
+if(!obj[jsonObject["value"]]) throw "value against \'value\' property is not found in dataSource element";
+//alert(obj[jsonObject["text"]] +", "+obj[jsonObject["value"]]);
+}
+if(jsonObject["firstOption"])
+{
+if(!jsonObject["firstOption"]["text"]) throw "\'text\' property is missing in firstOption";
+if(!jsonObject["firstOption"]["value"]) throw "\'value\' property is missing in firstOption";
+if(typeof jsonObject["firstOption"]["text"]!="string") throw "\'text\' property should be of string type in firstOption";
+if(typeof jsonObject["firstOption"]["value"]!="string") throw "\'value\' property should be of string type in firstOption";
+}
+this.element.options.length=0;
+if(jsonObject["firstOption"])
+{
+let option = document.createElement("option");
+option.text = jsonObject["firstOption"]["text"];
+option.value = jsonObject["firstOption"]["value"];
+this.element.appendChild(option);
+}
+for(let obj of jsonObject["dataSource"])
+{
+let option = document.createElement("option");
+option.text = obj[jsonObject["text"]];
+option.value = obj[jsonObject["value"]];
+this.element.appendChild(option);
+}
+}
 
 // setGridData() function
 this.setGridData=function(data)
 {
-    if(!Array.isArray(data)) throw "Data supplied to Grid should be an array";
-    var grid=null;
-    for(var i=0;i<$$$.model.grids.length;i++)
-    {
-        if($$$.model.grids[i].element==this.element)
-        {
-            grid=$$$.model.grids[i];    
-            break;
-        }
-    }
-    if(grid==null) throw "The element is not a Grid";
+if(!Array.isArray(data)) throw "Data supplied to Grid should be an array";
+var grid=null;
+for(var i=0;i<$$$.model.grids.length;i++)
+{
+if($$$.model.grids[i].element==this.element)
+{
+grid=$$$.model.grids[i];    
+break;
+}
+}
+if(grid==null) throw "The element is not a Grid";
 if(data.length>0)
 {
 for(let i=0;i<data.length;i++)
-{/////////////////////////////////////////remove these 2 (1st &3rd) from below
-    if(data[i]===null || typeof data[i]!="object" || Array.isArray(data[i])) throw "Every item in Grid data should be an object";
-    if(Object.keys(data[i]).length!=grid.headings.length) throw "Number of properties in every Grid data object should be equal to number of headings";
+{
+if(typeof data[i]!="object" || Array.isArray(data[i])) throw "Every item in Grid data should be an object";
+if(Object.keys(data[i]).length!=grid.headings.length) throw "Number of properties in every Grid data object should be equal to number of headings";
 }
-    let propertyNames=Object.keys(data[0]);
-    for(let i=1;i<data.length;i++)
-    {
-        let currentPropertyNames=Object.keys(data[i]);
-        for(var j=0;j<propertyNames.length;j++)
-        {
-            if(currentPropertyNames[j]!=propertyNames[j]) throw "All Grid data objects should have the same properties in the same order";
-        }
-    }
+let propertyNames=Object.keys(data[0]);
+for(let i=1;i<data.length;i++)
+{
+let currentPropertyNames=Object.keys(data[i]);
+for(var j=0;j<propertyNames.length;j++)
+{
+if(currentPropertyNames[j]!=propertyNames[j]) throw "All Grid data objects should have the same properties in the same order";
 }
-    grid.data=data;
-    grid.pageNumber=1;
+}
+}
+grid.data=data;
+grid.pageNumber=1;
+grid.update();
+if(grid.pagination) grid.updatePagination();
 };
-
-} // class JRockElement ends
+}
 
 
 
@@ -495,240 +899,79 @@ xmlHttpRequest.send(querystr);
 window.addEventListener('load',function(){
 $$$.initFramework();
 
-let testData=[
-    {
-        apple:"Red",
-        banana:"Yellow",
-        mango:"Green",
-	orange:"orange",
-	guava:"light green"
-    },
-    {
-        apple:"Sweet",
-        banana:"Ripe",
-        mango:"Raw",
-	orange:"Hard",
-	guava:"Rotten"
-    },
-    {
-        apple:"Fresh",
-        banana:"Fresh",
-        mango:"Fresh",
-	orange:"mid fresh",
-	guava:"stale"
-    }
-];
+
+
+
+
+/////testing code
+
+$$$.ajax({
+"methodType":"GET",
+"url":"servletFour",
+"success":function(responseData){
+var employees=JSON.parse(responseData);
+$$$('testEmployeesGrid').setGridData(employees);
+},
+"failure":function(){alert("some problem");}
+});
+
+setTimeout(function(){$$$("testEmployeesGrid").setGridData([
+{
+id:"X1",
+name:"Test User",
+designationCode:1,
+title:"A very very very long title that should be clipped",
+dateOfBirth:"Jan 1, 2000",
+gender:"M",
+isIndian:true,
+basicSalary:1000,
+panNumber:"LONGPAN123456789",
+aadharCardNumber:"12345678901234567890"
+}
+]);},9000);
+
+$$$.ajax({
+"methodType":"GET",
+"url":"servletOne",
+"success":function(responseData){
+var employees=JSON.parse(responseData);
+$$$('testDesignationsGrid').setGridData(employees);
+},
+"failure":function(){alert("some problem");}
+});
+
+
+let testData=[];
+for(let k=0;k<50;k++)
+{
+let obj={};
+obj.SNo=k+1;
+obj.apple=k+1+" apple";
+obj.banana=k+1+" banana";
+obj.mango=k+1+" mango";
+obj.orange=k+1+" orange";
+obj.guava=k+1+" guava";
+testData.push(obj);
+}
 $$$("testGrid").setGridData(testData);
-console.log($$$.model.grids[0].data);
 });
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class Student
-{
-constructor(rollNumber,name,nameOfMother,nameOfFather)
-{
-this.rollNumber=rollNumber;
-this.name=name;
-this.nameOfMother=nameOfMother;
-this.nameOfFather=nameOfFather;
-}
-}
-
-class Grid
-{
-constructor(dataTableId,dataTablePaginationId,students,pageSize)
-{
-this.dataTableId=dataTableId;
-this.dataTablePaginationId=dataTablePaginationId;
-this.students=students;
-this.pageSize=pageSize;
-this.pageNumber=1;
-this.numberOfPaginationControls=5;
-this.update();
-this.updatePagination();
-}
-setPage(pageNumber)
-{
-this.pageNumber=pageNumber;
-this.update();
-this.updatePagination();
-return false;
-}
-update()
-{
-var dataTable=document.getElementById(this.dataTableId);
-while(dataTable.rows.length>0) dataTable.deleteRow(0);
-var tr;
-var td;
-var startFromIndex=(this.pageNumber-1)*this.pageSize;
-var endAtIndex=startFromIndex+this.pageSize-1;
-if(endAtIndex>=this.students.length) endAtIndex=this.students.length-1;
-var x;
-for(x=startFromIndex;x<=endAtIndex;x++)
-{
-tr=document.createElement("tr");
-td=document.createElement("td");
-td.innerHTML=(x+1);
-tr.appendChild(td);
-td=document.createElement("td");
-td.innerHTML=this.students[x].rollNumber;
-tr.appendChild(td);
-td=document.createElement("td");
-td.innerHTML=this.students[x].name;
-tr.appendChild(td);
-td=document.createElement("td");
-td.innerHTML=this.students[x].nameOfMother;
-tr.appendChild(td);
-td=document.createElement("td");
-td.innerHTML=this.students[x].nameOfFather;
-tr.appendChild(td);
-dataTable.appendChild(tr);
-}
-}
-updatePagination()
-{
-function createPageChangeFunction(obj,pageNumber)
-{
-return function(){
-obj.setPage(pageNumber);
-};
-}
-var startFrom=((Math.floor((this.pageNumber-1)/this.numberOfPaginationControls)+1)-1)*this.numberOfPaginationControls+1;
-var endAt=startFrom+this.numberOfPaginationControls-1;
-var numberOfPages=Math.floor(this.students.length/this.pageSize);
-if(this.students.length%this.pageSize!=0) numberOfPages++;
-if(endAt>numberOfPages) endAt=numberOfPages;
-var dataTablePagination=document.getElementById(this.dataTablePaginationId);
-while(dataTablePagination.rows.length>0) dataTablePagination.deleteRow(0);
-var x;
-var tr;
-var td;
-var anchor;
-tr=document.createElement("tr");
-if(startFrom>1)
-{
-td=document.createElement("td");
-anchor=document.createElement("a");
-anchor.text="prev";
-anchor.href='javascript:void(0)';
-anchor.onclick=createPageChangeFunction(this,startFrom-1);
-td.appendChild(anchor);
-tr.appendChild(td);
-}
-for(x=startFrom;x<=endAt;x++)
-{
-td=document.createElement("td");
-if(x==this.pageNumber)
-{
-td.innerHTML="<b>"+x+"</b>";
-}
-else
-{
-anchor=document.createElement("a");
-anchor.text=x;
-anchor.href='javascript:void(0)';
-let objectAddress=this;
-anchor.onclick=createPageChangeFunction(this,x);
-td.appendChild(anchor);
-}
-tr.appendChild(td);
-}
-if(endAt<numberOfPages)
-{
-td=document.createElement("td");
-anchor=document.createElement("a");
-anchor.text="next";
-anchor.href='javascript:void(0)';
-anchor.onclick=createPageChangeFunction(this,endAt+1);
-td.appendChild(anchor);
-tr.appendChild(td);
-}
-dataTablePagination.appendChild(tr);
-}
-}
-
-var model={
-"grid":null
-};
-
-function loader()
-{
-var jrock_jgrid_header_division=document.querySelector(".jrock_jgrid_header_division");
-var jrock_jgrid_body_division=document.querySelector(".jrock_jgrid_body_division");
-jrock_jgrid_body_division.addEventListener('scroll',function(){
-jrock_jgrid_header_division.scrollLeft=jrock_jgrid_body_division.scrollLeft;
-});
-
-var i;
-var students=new Array();
-for(i=101;i<=1013;i++)
-{
-students.push(new Student(i,i+" Name",i+" Mother",i+" Father"));
-}
-model.grid=new Grid('dataTable','dataTablePagination',students,35);
-}
-window.addEventListener('load',loader);
-*/
 </script>
 </head>
 
 
 
+
+
+
+
+
+
+
+
+
 <body>
-<div class='someStyle' id="testGrid" grid="true" size="600x500" pagination="true" pageSize="10" headings='["apple","banana","mango","orange","guava"]' columnsWidth='[100,200,200,200,100]' border='1px groove red' headingColor="lightgray" cellColor="white" paginationbuttonColor="blue">
 
-<!--
-<div class="jrock_jgrid_header_division">
-<table class="jrock_jgrid_head">
-<tr>
-<td>S. No.</td>
-<td>Roll No.</td>
-<td>Name</td>
-<td>Mother</td>
-<td>Father</td>
-</tr>
-</table>
-</div>
-<div class="jrock_jgrid_body_division">
-<table class="jrock_jgrid_body" id="dataTable">
-</table>
-</div>
-<div class ="jrock_jgrid_pagination_division">
-<table class='jrock_jgrid_pagination' id='dataTablePagination'>
-</table>
-</div>
--->
-
-</div>
 </body>
 </html>
