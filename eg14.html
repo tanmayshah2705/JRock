@@ -56,68 +56,19 @@ overflow-y:auto;
 
 .jrock_jgrid_head
 {
-border:1px groove green;
 border-bottom:0px;
 border-spacing:0px;
 border-collapse:collapse;
 background:lightgray;
-}
-.jrock_jgrid_head td
-{
-border-left:1px groove red;
-border-right:1px groove red;
-border-top:1px groove red;
-border-bottom:0px;
 text-align:center;
 }
-
-/*.jrock_jgrid_head td+td
-{
-text-align:left;
-}
-.jrock_jgrid_head td+td+td
-{
-text-align:left;
-}
-.jrock_jgrid_head td+td+td+td
-{
-text-align:left;
-}
-.jrock_jgrid_head td+td+td+td+td
-{
-text-align:left;
-}
-*/
 
 .jrock_jgrid_body
 {
-border:1px groove green;
 border-spacing:0px;
 border-collapse:collapse;
-}
-.jrock_jgrid_body td
-{
-border:1px groove red;
 text-align:center;
 }
-
-/*.jrock_jgrid_body td+td
-{
-text-align:left;
-}
-.jrock_jgrid_body td+td+td
-{
-text-align:left;
-}
-.jrock_jgrid_body td+td+td+td
-{
-text-align:left;
-}
-.jrock_jgrid_body td+td+td+td+td
-{
-text-align:left;
-}
-*/
 
 .jrock_jgrid_pagination td
 {
@@ -191,7 +142,7 @@ class Grid
         this.headingColor=null;
         this.cellColor=null;
         this.paginationbuttonColor=null;
-	
+	this.border=null;
 //Grid data
         this.data=[];
 //Pagination state
@@ -254,7 +205,12 @@ class Grid
         }
 	}
 
-	
+	if(gridElement.hasAttribute("border"))
+	{
+	    let borderValue=gridElement.getAttribute("border");
+	    if(!CSS.supports("border",borderValue)) throw "border attribute should contain a valid CSS border value";
+	    this.border=borderValue;
+	}
 
         if(gridElement.hasAttribute("headingColor")) this.headingColor=gridElement.getAttribute("headingColor");
         if(gridElement.hasAttribute("cellColor")) this.cellColor=gridElement.getAttribute("cellColor"); 
@@ -296,11 +252,12 @@ class Grid
             td.innerHTML=this.headings[i];
             td.style.width=this.columnsWidth[i]+"px";
             if(this.headingColor) td.style.backgroundColor=this.headingColor;
+	    if(this.border){ td.style.borderLeft=this.border; td.style.borderTop=this.border; td.style.borderRight=this.border; }
             tr.appendChild(td);
         }
         this.headerTable.appendChild(tr);
 ///////////////////////////////
-for(let i=101;i<200;i++)
+/*for(let i=101;i<200;i++)
 {
     let tr=document.createElement("tr");
         for(let j=0;j<this.headings.length;j++)
@@ -309,10 +266,11 @@ for(let i=101;i<200;i++)
             td.innerHTML=(i)+" "+this.headings[j];
             td.style.width=this.columnsWidth[j]+"px";
             if(this.cellColor) td.style.backgroundColor=this.cellColor;
+	    if(this.border) td.style.border=this.border;
             tr.appendChild(td);
         }
     this.dataTable.appendChild(tr);
-}
+}*/
 ///////////////////////////////
 
         this.bodyDivision.addEventListener("scroll",function(){
@@ -365,6 +323,41 @@ this.element=element;
 // html() function
 // value() function
 // fillComboBox() function
+
+// setGridData() function
+this.setGridData=function(data)
+{
+    if(!Array.isArray(data)) throw "Data supplied to Grid should be an array";
+    var grid=null;
+    for(var i=0;i<$$$.model.grids.length;i++)
+    {
+        if($$$.model.grids[i].element==this.element)
+        {
+            grid=$$$.model.grids[i];    
+            break;
+        }
+    }
+    if(grid==null) throw "The element is not a Grid";
+if(data.length>0)
+{
+for(let i=0;i<data.length;i++)
+{/////////////////////////////////////////remove these 2 (1st &3rd) from below
+    if(data[i]===null || typeof data[i]!="object" || Array.isArray(data[i])) throw "Every item in Grid data should be an object";
+    if(Object.keys(data[i]).length!=grid.headings.length) throw "Number of properties in every Grid data object should be equal to number of headings";
+}
+    let propertyNames=Object.keys(data[0]);
+    for(let i=1;i<data.length;i++)
+    {
+        let currentPropertyNames=Object.keys(data[i]);
+        for(var j=0;j<propertyNames.length;j++)
+        {
+            if(currentPropertyNames[j]!=propertyNames[j]) throw "All Grid data objects should have the same properties in the same order";
+        }
+    }
+}
+    grid.data=data;
+    grid.pageNumber=1;
+};
 
 } // class JRockElement ends
 
@@ -501,6 +494,32 @@ xmlHttpRequest.send(querystr);
 
 window.addEventListener('load',function(){
 $$$.initFramework();
+
+let testData=[
+    {
+        apple:"Red",
+        banana:"Yellow",
+        mango:"Green",
+	orange:"orange",
+	guava:"light green"
+    },
+    {
+        apple:"Sweet",
+        banana:"Ripe",
+        mango:"Raw",
+	orange:"Hard",
+	guava:"Rotten"
+    },
+    {
+        apple:"Fresh",
+        banana:"Fresh",
+        mango:"Fresh",
+	orange:"mid fresh",
+	guava:"stale"
+    }
+];
+$$$("testGrid").setGridData(testData);
+console.log($$$.model.grids[0].data);
 });
 
 
@@ -686,7 +705,7 @@ window.addEventListener('load',loader);
 
 
 <body>
-<div class='someStyle' id="testGrid" grid="true" size="600x500" pagination="true" pageSize="10" headings='["apple","banana","mango","orange","guava"]' columnsWidth='[100,200,200,200,100]' headingColor="lightgray" cellColor="white" paginationbuttonColor="blue">
+<div class='someStyle' id="testGrid" grid="true" size="600x500" pagination="true" pageSize="10" headings='["apple","banana","mango","orange","guava"]' columnsWidth='[100,200,200,200,100]' border='1px groove red' headingColor="lightgray" cellColor="white" paginationbuttonColor="blue">
 
 <!--
 <div class="jrock_jgrid_header_division">
