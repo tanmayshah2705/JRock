@@ -1,11 +1,4 @@
-<!--this is the merged version of eg11(JRock) and eg13(Grid)-->
-
-<!doctype html>
-<html lang='en'>
-<head>
-<meta charset='utf-8'>
-<title>JRock grid</title>
-<style>
+var jrockStyle = `
 .jrock_jmodalMask
 {
 width:100%;
@@ -96,18 +89,17 @@ padding: 10px 18px;
 text-decoration:none;
 text-transform:uppercase;
 }
-</style>
+`;
 
 
 
-
-
-
-
-
-<script>
-///////////////////////////
-///////JRock library///////
+function addJRockStyle()
+{
+var style=document.createElement("style");
+style.type="text/css";
+style.textContent=jrockStyle;
+document.head.appendChild(style);
+}
 
 function $$$(cid){
 let element=document.getElementById(cid);
@@ -121,6 +113,120 @@ $$$.model={
 "modals":[],
 "grids":[]
 };
+
+
+
+function JRockElement(element)
+{
+this.element=element;
+
+// html() function
+this.html=function(content)
+{
+if(typeof this.element.innerHTML=="string")
+{
+if(typeof content=="string")
+{
+this.element.innerHTML=content;
+}
+return this.element.innerHTML;
+}
+return null;
+} 
+
+// value() function
+this.value=function(content)
+{
+if(typeof this.element.value)
+{
+if(typeof content=="string")
+{
+this.element.value=content;
+}
+return this.element.value;
+}
+return null;
+}
+
+// fillComboBox() function
+this.fillComboBox=function(jsonObject)
+{
+if(this.element.nodeName!="SELECT") throw "fillComboBox can be called on a SELECT type object only";
+if(!jsonObject["dataSource"]) throw "\'dataSource\' property is missing in fillComboBox function's parameter";
+if(!jsonObject["text"]) throw "\'text\' property is missing in fillComboBox function's parameter";
+if(!jsonObject["value"]) throw "\'value\' property is missing in fillComboBox function's parameter";
+if(!Array.isArray(jsonObject["dataSource"])) throw "\'dataSource\' property should be a collection in fillComboBox function's parameter";
+if(typeof jsonObject["text"]!="string") throw "\'text\' property should be of string type in fillComboBox function's parameter";
+if(typeof jsonObject["value"]!="string") throw "\'value\' property should be of string type in fillComboBox function's parameter";
+for(let obj of jsonObject["dataSource"]) //to check if values against text and value property is part of dataSource element
+{
+if(!obj[jsonObject["text"]]) throw "value against \'text\' property is not found in dataSource element";
+if(!obj[jsonObject["value"]]) throw "value against \'value\' property is not found in dataSource element";
+//alert(obj[jsonObject["text"]] +", "+obj[jsonObject["value"]]);
+}
+if(jsonObject["firstOption"])
+{
+if(!jsonObject["firstOption"]["text"]) throw "\'text\' property is missing in firstOption";
+if(!jsonObject["firstOption"]["value"]) throw "\'value\' property is missing in firstOption";
+if(typeof jsonObject["firstOption"]["text"]!="string") throw "\'text\' property should be of string type in firstOption";
+if(typeof jsonObject["firstOption"]["value"]!="string") throw "\'value\' property should be of string type in firstOption";
+}
+this.element.options.length=0;
+if(jsonObject["firstOption"])
+{
+let option = document.createElement("option");
+option.text = jsonObject["firstOption"]["text"];
+option.value = jsonObject["firstOption"]["value"];
+this.element.appendChild(option);
+}
+for(let obj of jsonObject["dataSource"])
+{
+let option = document.createElement("option");
+option.text = obj[jsonObject["text"]];
+option.value = obj[jsonObject["value"]];
+this.element.appendChild(option);
+}
+}
+
+// setGridData() function
+this.setGridData=function(data)
+{
+if(!Array.isArray(data)) throw "Data supplied to Grid should be an array";
+var grid=null;
+for(var i=0;i<$$$.model.grids.length;i++)
+{
+if($$$.model.grids[i].element==this.element)
+{
+grid=$$$.model.grids[i];    
+break;
+}
+}
+if(grid==null) throw "The element is not a Grid";
+if(data.length>0)
+{
+for(let i=0;i<data.length;i++)
+{
+if(typeof data[i]!="object" || Array.isArray(data[i])) throw "Every item in Grid data should be an object";
+if(Object.keys(data[i]).length!=grid.headings.length) throw "Number of properties in every Grid data object should be equal to number of headings";
+}
+let propertyNames=Object.keys(data[0]);
+for(let i=1;i<data.length;i++)
+{
+let currentPropertyNames=Object.keys(data[i]);
+for(var j=0;j<propertyNames.length;j++)
+{
+if(currentPropertyNames[j]!=propertyNames[j]) throw "All Grid data objects should have the same properties in the same order";
+}
+}
+}
+grid.data=data;
+grid.pageNumber=1;
+grid.update();
+if(grid.pagination) grid.updatePagination();
+};
+}
+
+
 
 ////////// grid specific code starts here
 class Grid
@@ -400,10 +506,10 @@ if(contentReference==contentParentReference.children[contentIndex]) break;
 }
 var modalMaskDivision=document.createElement("div");
 modalMaskDivision.style.display="none";
-modalMaskDivision.classList.add("jrock_modalMask");
+modalMaskDivision.classList.add("jrock_jmodalMask");
 var modalDivision=document.createElement("div");
 modalDivision.style.display="none";
-modalDivision.classList.add("jrock_modal");
+modalDivision.classList.add("jrock_jmodal");
 document.body.appendChild(modalMaskDivision);
 document.body.appendChild(modalDivision);
 
@@ -482,7 +588,7 @@ var cb=contentReference.getAttribute("closeButton");
 if(cb.toLowerCase()=="true")
 {
 closeButtonSpan=document.createElement("span");
-closeButtonSpan.classList.add("jrock_closeButton");
+closeButtonSpan.classList.add("jrock_jcloseButton");
 var closeButtonMarker=document.createTextNode("x");
 closeButtonSpan.appendChild(closeButtonMarker);
 headerDivision.appendChild(closeButtonSpan);
@@ -561,14 +667,12 @@ let headings=['H1','H2','H3','H4','H5','H6'];
 let i;
 for(i=0; i<children.length; i++)
 {
-//if(children[i].nodeName=="H3") panels[panels.length]=children[i];
 if(headings.includes(children[i].nodeName)) panels[panels.length]=children[i];
 if(children[i].nodeName=="DIV") panels[panels.length]=children[i];
 }
 if(panels.length%2!=0) throw "Headings and divisions malformed to create accordion because its not even";
 for(i=0;i<panels.length;i+=2)
 {
-//if(panels[i].nodeName!="H3") throw "Headings and divisions malformed to create accordion because its not H3 at index"+i;
 if(!headings.includes(panels[i].nodeName)) throw "Headings and divisions malformed to create accordion because its not a 'Heading' at index "+i;
 if(panels[i+1].nodeName!="DIV") throw "Headings and divisions malformed to create accordion because its not Div at index"+i;
 }
@@ -599,171 +703,7 @@ $$$.model.onStartup[$$$.model.onStartup.length]=func;
 
 
 
-$$$.initFramework=function()
-{
-//////// setting up accordions code starts here
-let allTags=document.getElementsByTagName("*");
-let i;
-for(i=0;i<allTags.length;i++)
-{
-if(allTags[i].hasAttribute("accordion"))
-{
-if(allTags[i].getAttribute("accordion")=="true")
-{
-$$$.toAccordion(allTags[i]);
-}
-}
-}
-for(let x=0;x<$$$.model.onStartup.length;x++)
-$$$.model.onStartup[x]();
 
-//////// setting up modals code starts here
-allTags=document.getElementsByTagName("*");
-i=0;
-while(i<allTags.length)
-{
-if(allTags[i].hasAttribute("forModal"))
-{
-if(allTags[i].getAttribute("forModal").toLowerCase()=="true")
-{
-allTags[i].setAttribute("forModal","false");
-$$$.model.modals[$$$.model.modals.length]=new Modal(allTags[i]);
-continue;
-}
-}
-++i;
-}
-
-//////// setting up grids code starts here
-var allTags=document.getElementsByTagName("*");
-i=0;
-while(i<allTags.length)
-{
-if(allTags[i].hasAttribute("grid"))
-{
-if(allTags[i].getAttribute("grid").toLowerCase()=="true")
-{
-allTags[i].setAttribute("grid","false");
-$$$.model.grids[$$$.model.grids.length]=new Grid(allTags[i]);
-continue;
-}
-}
-++i;
-}
-
-}
-
-
-
-function JRockElement(element)
-{
-this.element=element;
-
-// html() function
-this.html=function(content)
-{
-if(typeof this.element.innerHTML=="string")
-{
-if(typeof content=="string")
-{
-this.element.innerHTML=content;
-}
-return this.element.innerHTML;
-}
-return null;
-} 
-
-// value() function
-this.value=function(content)
-{
-if(typeof this.element.value)
-{
-if(typeof content=="string")
-{
-this.element.value=content;
-}
-return this.element.value;
-}
-return null;
-}
-
-// fillComboBox() function
-this.fillComboBox=function(jsonObject)
-{
-if(this.element.nodeName!="SELECT") throw "fillComboBox can be called on a SELECT type object only";
-if(!jsonObject["dataSource"]) throw "\'dataSource\' property is missing in fillComboBox function's parameter";
-if(!jsonObject["text"]) throw "\'text\' property is missing in fillComboBox function's parameter";
-if(!jsonObject["value"]) throw "\'value\' property is missing in fillComboBox function's parameter";
-if(!Array.isArray(jsonObject["dataSource"])) throw "\'dataSource\' property should be a collection in fillComboBox function's parameter";
-if(typeof jsonObject["text"]!="string") throw "\'text\' property should be of string type in fillComboBox function's parameter";
-if(typeof jsonObject["value"]!="string") throw "\'value\' property should be of string type in fillComboBox function's parameter";
-for(let obj of jsonObject["dataSource"]) //to check if values against text and value property is part of dataSource element
-{
-if(!obj[jsonObject["text"]]) throw "value against \'text\' property is not found in dataSource element";
-if(!obj[jsonObject["value"]]) throw "value against \'value\' property is not found in dataSource element";
-//alert(obj[jsonObject["text"]] +", "+obj[jsonObject["value"]]);
-}
-if(jsonObject["firstOption"])
-{
-if(!jsonObject["firstOption"]["text"]) throw "\'text\' property is missing in firstOption";
-if(!jsonObject["firstOption"]["value"]) throw "\'value\' property is missing in firstOption";
-if(typeof jsonObject["firstOption"]["text"]!="string") throw "\'text\' property should be of string type in firstOption";
-if(typeof jsonObject["firstOption"]["value"]!="string") throw "\'value\' property should be of string type in firstOption";
-}
-this.element.options.length=0;
-if(jsonObject["firstOption"])
-{
-let option = document.createElement("option");
-option.text = jsonObject["firstOption"]["text"];
-option.value = jsonObject["firstOption"]["value"];
-this.element.appendChild(option);
-}
-for(let obj of jsonObject["dataSource"])
-{
-let option = document.createElement("option");
-option.text = obj[jsonObject["text"]];
-option.value = obj[jsonObject["value"]];
-this.element.appendChild(option);
-}
-}
-
-// setGridData() function
-this.setGridData=function(data)
-{
-if(!Array.isArray(data)) throw "Data supplied to Grid should be an array";
-var grid=null;
-for(var i=0;i<$$$.model.grids.length;i++)
-{
-if($$$.model.grids[i].element==this.element)
-{
-grid=$$$.model.grids[i];    
-break;
-}
-}
-if(grid==null) throw "The element is not a Grid";
-if(data.length>0)
-{
-for(let i=0;i<data.length;i++)
-{
-if(typeof data[i]!="object" || Array.isArray(data[i])) throw "Every item in Grid data should be an object";
-if(Object.keys(data[i]).length!=grid.headings.length) throw "Number of properties in every Grid data object should be equal to number of headings";
-}
-let propertyNames=Object.keys(data[0]);
-for(let i=1;i<data.length;i++)
-{
-let currentPropertyNames=Object.keys(data[i]);
-for(var j=0;j<propertyNames.length;j++)
-{
-if(currentPropertyNames[j]!=propertyNames[j]) throw "All Grid data objects should have the same properties in the same order";
-}
-}
-}
-grid.data=data;
-grid.pageNumber=1;
-grid.update();
-if(grid.pagination) grid.updatePagination();
-};
-}
 
 
 
@@ -896,82 +836,65 @@ xmlHttpRequest.send(querystr);
 }
 }
 
+
+
+
+$$$.initFramework=function()
+{
+addJRockStyle();
+//////// setting up accordions code starts here
+let allTags=document.getElementsByTagName("*");
+let i;
+for(i=0;i<allTags.length;i++)
+{
+if(allTags[i].hasAttribute("accordion"))
+{
+if(allTags[i].getAttribute("accordion")=="true")
+{
+$$$.toAccordion(allTags[i]);
+}
+}
+}
+
+//////// setting up modals code starts here
+allTags=document.getElementsByTagName("*");
+i=0;
+while(i<allTags.length)
+{
+if(allTags[i].hasAttribute("forModal"))
+{
+if(allTags[i].getAttribute("forModal").toLowerCase()=="true")
+{
+allTags[i].setAttribute("forModal","false");
+$$$.model.modals[$$$.model.modals.length]=new Modal(allTags[i]);
+continue;
+}
+}
+++i;
+}
+
+//////// setting up grids code starts here
+allTags=document.getElementsByTagName("*");
+i=0;
+while(i<allTags.length)
+{
+if(allTags[i].hasAttribute("grid"))
+{
+if(allTags[i].getAttribute("grid").toLowerCase()=="true")
+{
+allTags[i].setAttribute("grid","false");
+$$$.model.grids[$$$.model.grids.length]=new Grid(allTags[i]);
+continue;
+}
+}
+++i;
+}
+
+for(let x=0;x<$$$.model.onStartup.length;x++)
+$$$.model.onStartup[x]();
+}
+
+
 window.addEventListener('load',function(){
 $$$.initFramework();
-
-
-
-
-
-/////testing code
-
-$$$.ajax({
-"methodType":"GET",
-"url":"servletFour",
-"success":function(responseData){
-var employees=JSON.parse(responseData);
-$$$('testEmployeesGrid').setGridData(employees);
-},
-"failure":function(){alert("some problem");}
 });
-
-setTimeout(function(){$$$("testEmployeesGrid").setGridData([
-{
-id:"X1",
-name:"Test User",
-designationCode:1,
-title:"A very very very long title that should be clipped",
-dateOfBirth:"Jan 1, 2000",
-gender:"M",
-isIndian:true,
-basicSalary:1000,
-panNumber:"LONGPAN123456789",
-aadharCardNumber:"12345678901234567890"
-}
-]);},9000);
-
-$$$.ajax({
-"methodType":"GET",
-"url":"servletOne",
-"success":function(responseData){
-var employees=JSON.parse(responseData);
-$$$('testDesignationsGrid').setGridData(employees);
-},
-"failure":function(){alert("some problem");}
-});
-
-
-let testData=[];
-for(let k=0;k<50;k++)
-{
-let obj={};
-obj.SNo=k+1;
-obj.apple=k+1+" apple";
-obj.banana=k+1+" banana";
-obj.mango=k+1+" mango";
-obj.orange=k+1+" orange";
-obj.guava=k+1+" guava";
-testData.push(obj);
-}
-$$$("testGrid").setGridData(testData);
-});
-
-
-</script>
-</head>
-
-
-
-
-
-
-
-
-
-
-
-
-<body>
-
-</body>
-</html>

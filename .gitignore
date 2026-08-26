@@ -1,7 +1,9 @@
 *.class
+WEB-INF/
 WEB-INF/web.xml
 WEB-INF/lib/
 eg8.html
 eg9.html
 eg10.html
 eg12.html
+JRock_series/
