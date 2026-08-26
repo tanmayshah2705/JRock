@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>JRock AJAX Example</title>
+<script src="jrock.js"></script>
+<script>
+
+document.getElementById("loadButton").onclick=function()
+{
+$$$.ajax({
+methodType:"GET",  //GET,POST,PUT,etc.
+url:"students",
+
+success:function(responseData)
+{
+document.getElementById("result").innerHTML=responseData;
+},
+
+failure:function()
+{
+document.getElementById("result").innerHTML="Could not load the data.";
+}
+});
+};
+
+</script>
+</head>
+
+<body>
+
+<h2>JRock AJAX Example</h2>
+<button id="loadButton">Load Data</button>
+<div id="result"></div>
+
+</body>
+</html>

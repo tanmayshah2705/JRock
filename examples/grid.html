@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<title>JRock Grid example</title>
+<script src="jrock.js"></script>
+<script>
+
+let testData1=[];
+for(let k=0;k<50;k++)
+{
+let obj={};
+obj.SNo=k+1;
+obj.apple=k+1+" apple";
+obj.banana=k+1+" banana";
+obj.mango=k+1+" mango";
+obj.orange=k+1+" orange";
+obj.guava=k+1+" guava";
+testData1.push(obj);
+}
+
+let testData2=[];
+for(let k=0;k<50;k++)
+{
+let obj={};
+obj.SNo=k+1;
+obj.apple=k+1+" apple";
+obj.banana=k+1+" banana";
+obj.mango=k+1+" mango";
+obj.orange=k+1+" orange";
+obj.guava=k+1+" guava";
+testData2.push(obj);
+}
+
+$$$.onDocumentLoaded(function () {
+$$$("testGrid1").setGridData(testData1);
+$$$("testGrid2").setGridData(testData2);
+});
+</script>
+</head>
+
+
+<body>
+
+<h2>Grid Example</h2>
+
+<h3>Example Grid 1</h3>
+<div id="testGrid1" grid="true" size="600x300" headings='["S. No.","apple","banana","mango","orange","guava"]' columnsWidth='[50,100,200,200,200,100]' border='1px groove red' headingColor="lightgray" cellColor="white" paginationbuttonColor="blue">
+</div>
+
+<br>
+
+<h3>Example Grid 2</h3>
+<div id="testGrid2" grid="true" size="600x200" pagination="true" pageSize="7" numberOfPaginationControls="7" headings='["S. No.","apple","banana","mango","orange","guava"]' columnsWidth='[50,100,200,200,200,100]' border='1px groove green' headingColor="lightblue" cellColor="white" paginationbuttonColor="blue">
+</div>
+
+</body>
+</html>

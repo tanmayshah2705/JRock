@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<title>JRock Modal example</title>
+<script src="../jrock.js"></script>
+<script>
+
+function abBeforeOpening()
+{
+alert("Modal with id='ab' is about to be opened");
+return true;
+}
+
+function abOpened()
+{
+alert("Modal opened");
+}
+
+function abBeforeClosing()
+{
+alert("Modal with id='ab' is about to be closed");
+return true;
+}
+
+function abClosed()
+{
+alert("modal closed");
+}
+
+function createModal()
+{
+$$$.modals.show("ab");
+}
+
+
+</script>
+</head>
+<body>
+
+<h2>Modal Example</h2>
+
+<button onclick='createModal()'>Show modal 1</button>
+
+<div id='ab' style="display:none" forModal="true" size="600x300" header="Some heading" footer="Some footer" closeButton=true maskColor="#0000ff" modalBackgroundColor="#549933" beforeOpening="abBeforeOpening()" afterOpening="abOpened()" beforeClosing="abBeforeClosing()"afterClosing="abClosed()">
+Some content<br>
+Some content<br>
+Some content<br>
+Some content<br>
+Some content<br>
+Some content<br>
+Some content<br>
+Some content<br>
+Some content<br>
+Some content<br>
+Some content<br>
+Some content<br>
+Some content<br>
+</div>
+
+
+</body>
+</html>
