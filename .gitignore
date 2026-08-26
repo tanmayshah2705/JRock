@@ -2,6 +2,9 @@
 WEB-INF/
 WEB-INF/web.xml
 WEB-INF/lib/
+WEB-INF/classes/
+WEB-INF/classes/com
+WEB-INF/classes/com/hr
 eg8.html
 eg9.html
 eg10.html
