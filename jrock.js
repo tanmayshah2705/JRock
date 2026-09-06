@@ -132,7 +132,7 @@ this.element.innerHTML=content;
 return this.element.innerHTML;
 }
 return null;
-} 
+};
 
 // value() function
 this.value=function(content)
@@ -146,7 +146,7 @@ this.element.value=content;
 return this.element.value;
 }
 return null;
-}
+};
 
 // fillComboBox() function
 this.fillComboBox=function(jsonObject)
@@ -186,7 +186,9 @@ option.text = obj[jsonObject["text"]];
 option.value = obj[jsonObject["value"]];
 this.element.appendChild(option);
 }
-}
+};
+
+
 
 // setGridData() function
 this.setGridData=function(data)
@@ -223,6 +225,255 @@ grid.data=data;
 grid.pageNumber=1;
 grid.update();
 if(grid.pagination) grid.updatePagination();
+};
+
+//isValid() function
+this.isValid=function(obj)
+{
+var formId = parameterObject;
+var valid = true;
+var firstInvalidComponent=null;
+var keysArray = Object.keys(obj);
+for(var i=0;i<keysArray.length;i++)
+{
+var key = keysArray[i];
+var keyObject = obj[key];
+var keyObjectErrors = keyObject.errors;
+var keyObjectErrorPane=document.getElementById(keyObject["error-pane"]);
+if(keyObjectErrorPane!=null) keyObjectErrorPane.innerHTML="";
+var keyObjectElement = document.getElementById(key);
+var keyObjectElementCollection=null;
+if(keyObjectElement==null){ keyObjectElementCollection=document.getElementsByName(key); if(keyObjectElementCollection.length>0) keyObjectElement=keyObjectElementCollection[0]; }
+if(keyObjectElement==null) continue;
+
+if(keyObjectElement.tagName=="INPUT")
+{
+if(keyObjectElement.type=="text" || keyObjectElement.type=="password" || keyObjectElement.type=="search" || keyObjectElement.type=="tel")
+{
+if(keyObject.required==true && keyObjectElement.value.trim().length==0)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.required;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+else if(keyObject["min-length"]!=null && keyObjectElement.value.trim().length<keyObject["min-length"])
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors["min-length"]; 
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+else if(keyObject["max-length"]!=null && keyObjectElement.value.trim().length>keyObject["max-length"])
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors["max-length"]; 
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+}
+else if(keyObjectElement.type=="email")
+{
+if(keyObject.required==true && keyObjectElement.value.trim().length==0)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.required;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+else if(keyObjectElement.value.trim().length>0)
+{
+var emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+if(!emailPattern.test(keyObjectElement.value))
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.invalid;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+else if(keyObject["max-length"]!=null && keyObjectElement.value.length>keyObject["max-length"])
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors["max-length"];
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+else if(keyObject["min-length"]!=null && keyObjectElement.value.length<keyObject["min-length"])
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors["min-length"];
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+}
+}
+else if(keyObjectElement.type=="radio")
+{
+var isChecked=false;
+if(keyObjectElementCollection==null) { if(keyObjectElement.checked) isChecked=true; }
+else
+{
+for(let radio of keyObjectElementCollection)
+{
+if(radio.checked){ isChecked=true; break; }
+}
+}
+if(keyObject.required==true && !isChecked){ 
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.required;	
+valid=false; 
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;  
+}
+}
+else if(keyObjectElement.type=="checkbox")
+{
+var isChecked=false;
+if(keyObjectElementCollection==null) { if(keyObjectElement.checked) isChecked=true; }
+else
+{
+for(let checkbox of keyObjectElementCollection)
+{
+if(checkbox.checked){ isChecked=true; break; }
+}
+}
+if(keyObject["required-state"]==true && !isChecked)
+{ 
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors["required-state"];	
+else if(keyObject["display-alert"]) alert(keyObjectErrors["required-state"]);
+valid=false; if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;  
+}				
+}
+else if(keyObjectElement.type=="number" || keyObjectElement.type=="range")
+{
+if(keyObject.required==true && keyObjectElement.value.trim().length==0)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.required;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+if(keyObjectElement.value.trim().length>0)
+{
+var numberValue=Number(keyObjectElement.value);
+if(isNaN(numberValue))
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.invalid;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+else
+{
+if(keyObject["min-value"]!=null && numberValue<Number(keyObject["min-value"]))
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors["min-value"];
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+if(keyObject["max-value"]!=null && numberValue>Number(keyObject["max-value"]))
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors["max-value"];
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+}
+}
+}
+else if(keyObjectElement.type=="url")
+{
+if(keyObject.required==true && keyObjectElement.value.trim().length==0)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.required;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+else if(keyObjectElement.value.trim().length>0)
+{
+try{  new URL(keyObjectElement.value);  }
+catch(e)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.invalid;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+}
+}
+else if(keyObjectElement.type=="date" || keyObjectElement.type=="datetime-local" || keyObjectElement.type=="month" || keyObjectElement.type=="time" || keyObjectElement.type=="week")
+{
+if(keyObject.required==true && keyObjectElement.value.trim().length==0)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.required;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+if(keyObjectElement.value.trim().length>0)
+{
+if(keyObject["min-value"]!=null && keyObjectElement.value<keyObject["min-value"])
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors["min-value"];
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+if(keyObject["max-value"]!=null && keyObjectElement.value>keyObject["max-value"])
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors["max-value"];
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+}
+}
+else if(keyObjectElement.type=="color")
+{
+if(keyObject.required==true && keyObjectElement.value.trim().length==0)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.required;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+}
+else if(keyObjectElement.type=="file")
+{
+if(keyObject.required==true && keyObjectElement.files.length==0)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.required;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+}
+else if(keyObjectElement.type=="hidden")
+{
+if(keyObject.required==true && keyObjectElement.value.trim().length==0)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.required;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+}
+}
+else if(keyObjectElement.tagName=="TEXTAREA")
+{
+if(keyObject.required==true && keyObjectElement.value.trim().length==0)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.required;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+}
+
+else if(keyObjectElement.tagName=="SELECT")
+{
+if(keyObjectElement.multiple)
+{
+if(keyObject.required==true && keyObjectElement.selectedOptions.length==0)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.required;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+}
+else
+{
+if(keyObject.invalid!=null && keyObjectElement.value==keyObject.invalid)
+{
+if(keyObjectErrorPane) keyObjectErrorPane.innerHTML=keyObjectErrors.invalid;
+valid=false;
+if(firstInvalidComponent==null) firstInvalidComponent=keyObjectElement;
+}
+}
+}
+}
+if(!valid && firstInvalidComponent) firstInvalidComponent.focus();
+return valid;
 };
 }
 
