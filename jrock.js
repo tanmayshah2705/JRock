@@ -227,10 +227,11 @@ grid.update();
 if(grid.pagination) grid.updatePagination();
 };
 
+
 //isValid() function
 this.isValid=function(obj)
 {
-var formId = parameterObject;
+//var formId = parameterObject;
 var valid = true;
 var firstInvalidComponent=null;
 var keysArray = Object.keys(obj);
@@ -1093,6 +1094,11 @@ xmlHttpRequest.send(querystr);
 $$$.initFramework=function()
 {
 addJRockStyle();
+
+//////// setting up forms code starts here
+let allForms=document.getElementsByTagName("form");
+for(let i=0;i<allForms.length;i++) allForms[i].setAttribute("novalidate","");
+
 //////// setting up accordions code starts here
 let allTags=document.getElementsByTagName("*");
 let i;

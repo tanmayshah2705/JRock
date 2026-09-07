@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<title>JRock form validation example</title>
+<style>
+.error
+{
+color:red;
+}
+</style>
+<script src="jrock.js"></script>
+<script>
+function doSomething()
+{
+return $$$("exampleForm").isValid({
+"name":{
+    "required":true,
+    "min-length":3,
+    "max-length":20,
+    "error-pane":"nameErrorSection",
+    "errors":{
+        "required":"Name required",
+        "min-length":"Name must be at least 3 characters",
+        "max-length":"Name cannot exceed 20 characters"
+    }
+},
+
+"password":{
+    "required":true,
+    "min-length":8,
+    "max-length":15,
+    "error-pane":"passwordErrorSection",
+    "errors":{
+        "required":"Password required",
+        "min-length":"Password must be at least 8 characters",
+        "max-length":"Password cannot exceed 15 characters"
+    }
+},
+
+"email":{
+    "required":true,
+    "min-length":5,
+    "max-length":50,
+    "error-pane":"emailErrorSection",
+    "errors":{
+        "required":"Email required",
+        "invalid":"Enter a valid email",
+        "min-length":"Email must be at least 5 characters",
+        "max-length":"Email cannot exceed 50 characters"
+    }
+},
+
+"website":{
+    "required":true,
+    "error-pane":"websiteErrorSection",
+    "errors":{
+    "required":"Website required",
+    "invalid":"Enter a valid URL"
+    }
+},
+
+"phone":{
+    "required":true,
+    "min-length":10,
+    "max-length":10,
+    "error-pane":"phoneErrorSection",
+    "errors":{
+        "required":"Phone number required",
+        "min-length":"Phone number must be 10 characters",
+        "max-length":"Phone number must be 10 characters"
+    }
+},
+
+"age":{
+    "required":true,
+    "min-value":18,
+    "max-value":60,
+    "error-pane":"ageErrorSection",
+    "errors":{
+        "required":"Age required",
+        "invalid":"Enter a valid number",
+        "min-value":"Age must be at least 18",
+        "max-value":"Age cannot be greater than 60"
+    }
+},
+
+"dob":{
+    "required":true,
+    "max-value":"2008-01-01",
+    "error-pane":"dobErrorSection",
+    "errors":{
+        "required":"Date of birth required",
+        "min-value":"Date is too early",
+        "max-value":"Date must be before 2008"
+    }
+},
+
+"appointment":{
+    "required":true,
+    "min-value":"2026-09-01T09:00",
+    "error-pane":"appointmentErrorSection",
+    "errors":{
+        "required":"Appointment time required",
+        "min-value":"Please select a later time"
+    }
+},
+
+"birthMonth":{
+    "required":true,
+    "error-pane":"monthErrorSection",
+    "errors":{
+        "required":"Birth month required"
+    }
+},
+
+"meetingTime":{
+    "required":true,
+    "error-pane":"timeErrorSection",
+    "errors":{
+        "required":"Meeting time required"
+    }
+},
+
+"birthWeek":{
+    "required":true,
+    "error-pane":"weekErrorSection",
+    "errors":{
+        "required":"Birth week required"
+    }
+},
+
+"favoriteColor":{
+    "required":true,
+    "error-pane":"colorErrorSection",
+    "errors":{
+        "required":"Please select a color"
+    }
+},
+
+"resume":{
+    "required":true,
+    "error-pane":"resumeErrorSection",
+    "errors":{
+        "required":"Please select a file"
+    }
+},
+
+"gender":{
+    "required":true,
+    "error-pane":"genderErrorSection",
+    "errors":{
+        "required":"Select gender"
+    }
+},
+
+"address":{
+    "required":true,
+    "error-pane":"addressErrorSection",
+    "errors":{
+        "required":"Address required"
+    }
+},
+
+"city":{
+    "invalid":-1,
+    "error-pane":"cityErrorSection",
+    "errors":{
+        "invalid":"Select city"
+    }
+},
+
+"courses":{
+    "required":true,
+    "error-pane":"coursesErrorSection",
+    "errors":{
+        "required":"Select at least one course"
+    }
+},
+
+"agree":{
+    "required-state":true,
+    "display-alert":true,
+    "errors":{
+        "required-state":"Select I Agree checkbox"
+    }
+}
+});
+}
+</script>
+</head>
+
+
+<body>
+<h1>JRock validations</h1>
+
+<form id="exampleForm" action='/JRock/servletFour' onsubmit='return doSomething()'>
+<p>
+Name:
+<input type="text" id="name">
+<span id="nameErrorSection" class='error'></span>
+</p>
+
+<p>
+Password:
+<input type="password" id="password">
+<span id="passwordErrorSection" class='error'></span>
+</p>
+
+<p>
+Email:
+<input type="email" id="email">
+<span id="emailErrorSection" class='error'></span>
+</p>
+
+<p>
+Website:
+<input type="url" id="website">
+<span id="websiteErrorSection" class='error'></span>
+</p>
+
+<p>
+Phone:
+<input type="tel" id="phone">
+<span id="phoneErrorSection" class='error'></span>
+</p>
+
+<p>
+Age:
+<input type="number" id="age">
+<span id="ageErrorSection" class='error'></span>
+</p>
+
+<p>
+Date of Birth:
+<input type="date" id="dob">
+<span id="dobErrorSection" class='error'></span>
+</p>
+
+<p>
+Appointment:
+<input type="datetime-local" id="appointment">
+<span id="appointmentErrorSection" class='error'></span>
+</p>
+
+<p>
+Birth Month:
+<input type="month" id="birthMonth">
+<span id="monthErrorSection" class='error'></span>
+</p>
+
+<p>
+Meeting Time:
+<input type="time" id="meetingTime">
+<span id="timeErrorSection" class='error'></span>
+</p>
+
+<p>
+Birth Week:
+<input type="week" id="birthWeek">
+<span id="weekErrorSection" class='error'></span>
+</p>
+
+<p>
+Favorite Color:
+<input type="color" id="favoriteColor">
+<span id="colorErrorSection" class='error'></span>
+</p>
+
+<p>
+Resume:
+<input type="file" id="resume">
+<span id="resumeErrorSection" class='error'></span>
+</p>
+
+<p>
+Gender:
+<input type="radio" name="gender" id="male" value="M">
+Male
+<input type="radio" name="gender" id="female" value="F">
+Female
+<span id="genderErrorSection" class='error'></span>
+</p>
+
+<p>
+Address:
+<textarea id="address"></textarea>
+<span id="addressErrorSection" class='error'></span>
+</p>
+
+<p>
+City:
+<select id="city">
+<option value="-1">Select City</option>
+<option value="1">Mumbai</option>
+<option value="2">Delhi</option>
+<option value="3">Pune</option>
+</select>
+<span id="cityErrorSection" class='error'></span>
+</p>
+
+<p>
+Courses:
+<select id="courses" multiple>
+<option value="java">Java</option>
+<option value="javascript">JavaScript</option>
+<option value="python">Python</option>
+</select>
+<span id="coursesErrorSection" class='error'></span>
+</p>
+
+<p>
+<input type="checkbox" name="agree" id="agree">I agree to the terms.
+<span id="agreeErrorSection" class='error'></span>
+</p>
+
+<br>
+
+<button type="submit">Validate Form</button>
+
+</form>
+
+</body>
+</html>
